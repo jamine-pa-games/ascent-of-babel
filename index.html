@@ -290,16 +290,83 @@ body{
 .stat{display:flex; align-items:center; gap:6px}
 .stat b{color:var(--parch-dim); font-weight:400; letter-spacing:.1em; font-size:10px}
 .stat span{color:var(--parch)}
-.bar{width:64px; height:7px; background:#000; border:1px solid var(--edge); position:relative}
-.bar i{display:block; height:100%; transition:width .2s ease}
-#hpbar i{background:var(--blood)}
-#fullbar i{background:var(--brass)}
+/* 量表。第一版是「黑底 + 一格純色」—— 資訊完全正確，
+   但它讀起來是除錯面板上的進度條，不是一個角色的體力。
+   差別在三件事，而且三件都是一行 CSS：
+     · 凹槽要有深度（內陰影），不是一塊黑色矩形
+     · 填色要有受光（上緣亮一階的漸層），不是一塊平的紅色
+     · 表面要有刻度（重複漸層的細線），眼睛才會把它當成「儀表」
+   後面再疊一道很淡的外光，滿的時候看得出來它是亮著的。 */
+.bar{
+  width:64px; height:9px; position:relative; overflow:hidden;
+  background:linear-gradient(180deg,#05060a,#0d0f14);
+  border:1px solid var(--edge); border-radius:2px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.04);
+}
+.bar i{
+  display:block; height:100%; transition:width .2s ease;
+  position:relative; border-radius:1px;
+}
+/* 刻度：壓在填色上面，所以只有「有值的那一段」看得到分格 */
+.bar::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(90deg,
+    rgba(0,0,0,.34) 0 1px, rgba(0,0,0,0) 1px 8px);
+}
+#hpbar i{background:linear-gradient(180deg,#e0644e,var(--blood) 55%,#5e1a14);
+         box-shadow:0 0 6px rgba(201,74,58,.45)}
+#mpbar i{box-shadow:0 0 6px rgba(74,134,207,.40)}
+#fullbar i{background:linear-gradient(180deg,#f0cc7a,var(--brass) 55%,#6b4a12)}
 .warn{color:var(--brass)!important}
 .crit{color:var(--blood)!important; animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.45}}
 
 /* ── 畫面 ── */
 #screenwrap{position:relative; background:#000; line-height:0; overflow:hidden; touch-action:none}
+/* ── 頭目的血條 ──────────────────────────────────────────────
+   為什麼是 HTML 而不是畫在畫布上：畫布內部只有 224px 寬，
+   桌機上放大將近四倍 —— 6px 的字在螢幕上等於 23px，
+   一條血條就吃掉整個畫面上緣（試過，那看起來像跑錯版）。
+   用 HTML 才拿得到跟狀態列同一套字體與同一個尺寸感。 */
+#bossbar{
+  position:absolute; left:50%; top:10px; transform:translateX(-50%) translateY(-8px);
+  width:min(62%, 340px); padding:5px 9px 6px; line-height:1.2;
+  background:linear-gradient(180deg,rgba(20,17,15,.92),rgba(8,7,6,.92));
+  border:1px solid var(--brass-dim); border-radius:3px;
+  box-shadow:0 2px 10px rgba(0,0,0,.55);
+  opacity:0; pointer-events:none; transition:opacity .28s ease, transform .28s ease;
+}
+#bossbar.show{opacity:1; transform:translateX(-50%) translateY(0)}
+#bossnm{
+  display:block; font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  color:var(--parch); text-align:center; margin-bottom:3px;
+}
+/* 幾條命。使用者：「你畫的是一條跳三次血條魔王才會掛掉，
+   但是不知道的玩家會因為他會自動回復血」—— 完全正確：
+   血條歸零卻又滿回來，在沒有預告的情況下讀起來就是「這東西會回血」，
+   那是最讓人洩氣的一種誤解。所以打之前就把還剩幾條畫出來。 */
+#bosspips{display:flex; justify-content:center; gap:4px; margin-bottom:4px}
+#bosspips i{
+  width:5px; height:5px; display:block; transform:rotate(45deg);
+  background:linear-gradient(180deg,#e0644e,var(--blood));
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);
+}
+#bosspips i.off{background:var(--edge); box-shadow:none; opacity:.55}
+#bosstrack{
+  position:relative; height:7px; background:linear-gradient(180deg,#05060a,#0d0f14);
+  border:1px solid var(--edge); border-radius:2px; overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9);
+}
+#bosstrack i{position:absolute; left:0; top:0; bottom:0; display:block}
+/* 殘影只往下追 —— 那一段白色的差距就是「這一刀有多重」 */
+#bosslag{background:rgba(232,220,192,.5); transition:width .45s ease-out}
+#bosshp{background:linear-gradient(180deg,#e0644e,var(--blood) 55%,#5e1a14);
+        box-shadow:0 0 6px rgba(201,74,58,.5); transition:width .12s linear}
+#bosstrack::after{
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(90deg,
+    rgba(0,0,0,.40) 0 1px, rgba(0,0,0,0) 1px 25%);
+}
 /* 只有主畫面拉滿寬度。這條規則以前是 `canvas{}`，
    結果把小地圖也一起拉寬、糊成非整數倍縮放。 */
 #game{
@@ -312,6 +379,16 @@ body{
   /* 跟著畫面寬度縮放。寫死 90px 的話，在 390px 寬的手機上
      等於把整個房間罩住，玩家會以為遊戲壞了。 */
   box-shadow:inset 0 0 clamp(34px,9vw,90px) clamp(9px,2.4vw,24px) rgba(0,0,0,.82);
+}
+/* ── 挨打的暈影 ──────────────────────────────────────────────
+   數字跳出來、畫面震一下，但「我快死了」這件事一直只能靠讀血條。
+   邊緣泛紅是最不需要解釋的一種提示：它出現在眼角，不佔畫面中央，
+   而且深度直接對應這一下有多重。體力見底的時候會留著不散 ——
+   那一層薄薄的紅就是「下一下就沒了」。 */
+#hurt{
+  position:absolute; inset:0; pointer-events:none; opacity:0;
+  box-shadow:inset 0 0 clamp(30px,8vw,80px) clamp(6px,2vw,20px) rgba(168,60,50,.95);
+  transition:opacity .18s ease-out;
 }
 #shake{position:relative; will-change:transform}
 
@@ -335,12 +412,21 @@ body{
   border:1px solid var(--edge);
   width:270px; max-width:100%; height:auto;
 }
+/* 圖例。第一版是七顆方塊排成兩行 —— 資訊正確，但它讀起來是
+   除錯面板上的色票表，而那正是使用者說的「很程式開發的感覺」。
+   兩個修法，都不動內容：
+     · 方塊改成小圓點（方塊＝資料，圓點＝標記）
+     · 前三個是地形，地圖上一眼就分得出來，壓暗一階；
+       後四個是記號（你／樓梯／怪物／道具），那才是真的需要對照的 */
 #legend{
-  display:flex; flex-wrap:wrap; gap:3px 12px; margin-top:8px;
-  font-family:var(--mono); font-size:9.5px; color:var(--parch-dim);
+  display:flex; flex-wrap:wrap; gap:2px 11px; margin-top:9px;
+  font-family:var(--mono); font-size:9px; letter-spacing:.05em;
+  color:var(--parch-dim);
 }
-#legend span{display:flex; align-items:center; gap:4px}
-#legend i{width:7px; height:7px; display:block}
+#legend span{display:flex; align-items:center; gap:5px}
+#legend i{width:6px; height:6px; display:block; border-radius:50%;
+          box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+#legend span:nth-child(-n+3){opacity:.5}
 
 /* ── 裝備後的角色形象 ──
    清單告訴你「身上有什麼」，這張圖告訴你「看起來像什麼」。
@@ -572,8 +658,10 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   display:flex; flex-wrap:wrap; gap:4px 12px; justify-content:center;
   font-family:var(--mono); font-size:10px; color:var(--parch-dim); max-width:420px;
 }
-.bmlegend span{display:flex; align-items:center; gap:4px}
-.bmlegend i{width:8px; height:8px; display:block}
+.bmlegend span{display:flex; align-items:center; gap:5px}
+.bmlegend i{width:7px; height:7px; display:block; border-radius:50%;
+            box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.bmlegend span:nth-child(-n+3){opacity:.55}
 #bigx{padding:10px 26px; font-size:13px; min-height:44px; touch-action:manipulation}
 
 /* 瞄準層只負責「變暗 + 告訴你要選方向」，本身不吃事件 ——
@@ -637,7 +725,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
   border-style:dashed; color:var(--parch-dim);
 }
 .slot.on{border-style:solid; border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.12)}
-#mpbar i{background:var(--azure)}
+#mpbar i{background:linear-gradient(180deg,#7cb8ea,var(--azure) 55%,#1d3468)}
 
 /* 提示條會被翻譯撐開：英文比中文長快一倍，nowrap 的話兩端都會被切掉。
    改成允許換行、寬度跟著畫布走 —— 讀得完比排成一行重要。 */
@@ -739,10 +827,51 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
 #over{
   position:absolute; inset:0; z-index:26; display:none; place-items:center; text-align:center;
   background:rgba(8,6,5,.9); padding:24px;
+  /* 長文要捲得到，而且只能往下溢出。
+     place-items:center 在內容過高時會往**上下兩邊**一起溢出，
+     上面那一半沒有捲軸可以到達 —— 這個 repo 的 body 已經踩過同一個坑。
+     使用者的截圖就是它：結局的字蓋滿整個手把區，而且捲不動。 */
+  overflow-y:auto; place-items:center; place-items:safe center;
+  line-height:1.6;
 }
 #over.show{display:grid}
-#over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px; color:var(--blood)}
+/* 行高一定要寫。#screenwrap 是 line-height:0（為了讓畫布沒有基線空隙），
+   而 #over 在它裡面 —— 沒寫的話標題兩行會疊在一起，
+   截圖裡「You hav[M]become the」就是這樣來的。 */
+#over h3{font-family:var(--serif); font-size:22px; letter-spacing:.2em; margin:0 0 10px;
+         color:var(--blood); line-height:1.35}
 #over p{margin:0 0 16px; font-size:13px; color:var(--parch-dim); line-height:1.7}
+/* ── 結局：一段一段浮上來再散掉 ──────────────────────────────
+   使用者：「可不可以用緩慢上升並消失的字幕，或是一段出來、消失、
+   再另一段⋯類似星際大戰的結尾，要讓人有回味的感覺」。
+   一次把九十三層的收尾全部倒在同一畫面上，讀起來是一面公告；
+   一段一段來，每一段才有機會被讀完。 */
+#over.roll{align-content:center}
+/* 結局的畫。使用者：「用畫面表達＋註解」——
+   文字說的事情要有畫面對著看，十五段字幕再好，讀起來還是一封信。 */
+#endart{
+  display:none; width:min(78%, 320px); height:auto; margin:0 auto 14px;
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  border:1px solid var(--edge); border-radius:2px;
+  box-shadow:0 6px 20px rgba(0,0,0,.5);
+  animation:stanza 6.5s ease-out forwards;
+}
+#over.roll #endart.on{display:block}
+#over.roll #otitle, #over.roll #restart, #over.roll #oboard{display:none}
+#otext.stanza{
+  font-size:15px; line-height:2.0; color:var(--parch); max-width:34em;
+  animation:stanza 6s ease-out forwards;
+}
+@keyframes stanza{
+  0%{opacity:0; transform:translateY(26px)}
+  14%{opacity:1; transform:translateY(14px)}
+  76%{opacity:1; transform:translateY(-8px)}
+  100%{opacity:0; transform:translateY(-20px)}
+}
+@media (prefers-reduced-motion: reduce){
+  #otext.stanza{animation:stanzafade 6s ease-out forwards}
+  @keyframes stanzafade{0%{opacity:0} 12%{opacity:1} 80%{opacity:1} 100%{opacity:0}}
+}
 #over b{color:var(--parch); font-family:var(--mono)}
 
 /* 側欄分頁鍵：只在窄螢幕出現 */
@@ -971,7 +1100,11 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
     <div id="screenwrap">
       <canvas id="game" width="224" height="160"></canvas>
       <div id="tags"></div>
+      <!-- 頭目的血條。頭目現在真的會打死人，那就要看得到自己打掉了多少 -->
+      <div id="bossbar"><b id="bossnm"></b><span id="bosspips"></span><div id="bosstrack"><i id="bosslag"></i><i id="bosshp"></i></div></div>
       <div id="vig"></div>
+      <!-- 挨打的那一瞬間，畫面邊緣泛紅。傷得越重紅得越深 -->
+      <div id="hurt"></div>
       <div id="panel">
         <h2><span id="ptitle">背包</span><em id="pcount"></em>
           <button id="pclose" aria-label="關閉">✕</button></h2>
@@ -1026,6 +1159,7 @@ button.ping{border-color:var(--brass); color:var(--brass); animation:ping 1.4s e
       <div id="over">
         <div>
           <h3 id="otitle">你倒下了</h3>
+          <canvas id="endart" width="128" height="72"></canvas>
           <p id="otext"></p>
           <button id="restart"><span class="k">R</span>再下一次地牢</button>
           <button id="oboard">紀錄碑</button>
@@ -1269,37 +1403,55 @@ const MONS = [
    不是「一次失誤就重來」。 */
 const BOSS = [
  {id:'b_warden', nm:'礦坑守衛',   ai:'C', hp:70,atk:6,def:5,exp:200, spd:1,  sight:7, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂'], line:'石頭在呼吸。它醒了。'},
+  imm:['睡','亂'], adds:{n:1, cd:10}, ward:{cd:14, dur:3},
+  line:'石頭在呼吸。它醒了 —— 而且不只一塊。'},
  {id:'b_treant', nm:'森之主',     ai:'C', hp:130,atk:11,def:8,exp:400, spd:.5, sight:6, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'霧散開了 —— 那不是樹。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:8}, rage:.45, quake:9,
+  line:'霧散開了 —— 那不是樹。而且林子裡不只牠一個。'},
  /* turret 型頭目：普通攻擊傷不了它，要用房間裡的砲座打。
     n=幾座　dmg=每一發打掉最大體力的幾成　cool=打完幾回合才能再用
     投石小魔王排在第三章，是刻意的 —— 這個機制要在玩家還很弱的時候教會，
     到了第十二章的光線人才會知道「原地站著換不到傷害」。 */
  {id:'b_ballista',nm:'投石小魔王',ai:'R', hp:170,atk:12,def:10,exp:600, spd:1,  sight:12,ev:0, fl:[0,0], w:0, boss:1,
-  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5},
+  rng:9, still:1, telegraph:1, turret:{n:3, dmg:.18, cool:5}, rage:.4, adds:{n:2, cd:10},
   line:'白色的方塊亮起來了 —— 那是射程。石頭傷不了它，但山道上的投石機可以。'},
  {id:'b_pyro',   nm:'火之術士',   ai:'R', hp:190,atk:13,def:11,exp:800, spd:1,  sight:12,ev:6, fl:[0,0], w:0, boss:1,
-  rng:10, cadence:3, telegraph:1, line:'三回合一次。柱子後面是唯一的答案。'},
+  rng:10, cadence:3, telegraph:1, quake:7, adds:{n:2, cd:11, id:'imp'}, rage:.35,
+  line:'三回合一次。柱子後面是唯一的答案 —— 但別站在牠腳邊。'},
  {id:'b_lord',   nm:'湖水之主',   ai:'C', hp:210,atk:16,def:12,exp:900, spd:1,  sight:8, ev:4, fl:[0,0], w:0, boss:1,
-  line:'湖面立起來了。'},
+  telegraph:1, cadence:4, charge:1, blink:[9,14], ward:{cd:12, dur:4},
+  line:'湖面立起來了 —— 水不會繞路，它直接撞過來。'},
  {id:'b_phoenix', lives:1,nm:'不死鳥',     ai:'C', hp:260,atk:20,def:14,exp:1200,spd:1.5,sight:9, ev:10,fl:[0,0], w:0, boss:1,
-  line:'牠燒起來的時候，是在重生。'},
+  rage:.5, quake:8, ward:{cd:13, dur:3},
+  line:'牠燒起來的時候，是在重生 —— 而且會燒到站得太近的人。'},
  {id:'b_hanzo',  nm:'全藏',       ai:'C', hp:290,atk:24,def:15,exp:1500,spd:2,  sight:9, ev:22,fl:[0,0], w:0, boss:1,
-  line:'「看得見我，就贏得了我。」'},
+  blink:[3,6], rage:.35, adds:{n:1, cd:13},
+  /* 本來叫的是影忍 —— 而影忍挨打會分身，於是牠每十三回合叫兩隻、
+     兩隻各自再分裂，走通測試在這一章直接卡住四十次。
+     召喚要挑「不會自我繁殖」的東西，這是叫援軍這個動詞的隱藏規格。 */
+  line:'「看得見我，就贏得了我。」—— 問題是他不會待在同一個地方。'},
  {id:'b_oni',    nm:'鬼武者',     ai:'C', hp:330,atk:26,def:16,exp:1800,spd:1,  sight:8, ev:0, fl:[0,0], w:0, boss:1,
-  counter:.35, line:'牠拔刀的速度比你眨眼快。'},
+  counter:.35, telegraph:1, cadence:5, charge:1, rage:.4, quake:9,
+  line:'牠拔刀的速度比你眨眼快 —— 而且牠會連人帶刀衝過來。'},
  {id:'b_gaoler', nm:'牢獄長',     ai:'C', hp:420,atk:30,def:18,exp:2400,spd:1,  sight:9, ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'鑰匙掛在牠腰上。'},
- {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'C', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
-  line:'打碎一次，她會再站起來。三次。'},
+  imm:['睡','亂','麻'], adds:{n:2, cd:9}, rage:.4, ward:{cd:14, dur:4},
+  line:'鑰匙掛在牠腰上 —— 但牠不是一個人在看守。'},
+ /* 鏡之女王：整章的規則就是「鏡子」—— 她不走路，她換一面鏡子出現。
+    停十到十五回合，然後閃到房間裡的另一個位置；停著的時候固定週期
+    預告一條直線再射出去。玩家因此永遠有兩件事要決定：
+    這一回合是躲線還是吃傷害往前壓，以及她下次會出現在哪一邊。 */
+ {id:'b_queen', lives:2,  nm:'鏡之女王',   ai:'R', hp:200,atk:32,def:18,exp:2600,spd:1,  sight:9, ev:12,fl:[0,0], w:0, boss:1,
+  rng:10, telegraph:1, cadence:2, blink:[4,7], charge:1, unreflect:1, mpburn:12,
+  line:'打碎一次，她會再站起來。三次。鏡子裡的東西不會走過來。'},
  {id:'b_prism',  nm:'光線人',     ai:'R', hp:380,atk:34,def:20,exp:3000,spd:1,  sight:14,ev:0, fl:[0,0], w:0, boss:1,
-  rng:12, telegraph:1, turret:{n:4, dmg:.15, cool:6},
+  rng:12, telegraph:1, cadence:2, turret:{n:4, dmg:.15, cool:6}, rage:.4, adds:{n:2, cd:12, id:'turret'},
   line:'光走直線 —— 所以不要站在直線上。它自己也是光，刀砍不斷光。'},
  {id:'b_mermaid',nm:'人魚王后',   ai:'R', hp:520,atk:40,def:22,exp:4000,spd:1,  sight:12,ev:8, fl:[0,0], w:0, boss:1,
-  rng:9, line:'塔頂的歌聲。'},
+  rng:9, mpburn:12, quake:8, telegraph:1, cadence:3, ward:{cd:13, dur:4}, adds:{n:2, cd:12},
+  line:'塔頂的歌聲 —— 聽久了，連咒文都會忘記。'},
  {id:'b_gate',   nm:'門之守望',   ai:'C', hp:600,atk:44,def:24,exp:5000,spd:1,  sight:10,ev:0, fl:[0,0], w:0, boss:1,
-  imm:['睡','亂','麻'], line:'最後一道門。'},
+  imm:['睡','亂','麻'], quake:6, rage:.35, adds:{n:2, cd:12}, ward:{cd:12, dur:4}, charge:1, telegraph:1, cadence:5,
+  line:'最後一道門 —— 它不需要移動，你自己會走過來。'},
 
  /* ── 「意識」：三種型態，一場連續的戰鬥 ──────────────────────
     設計原則：每一型態只考一件事，而且每一件事都有明確的正解。
@@ -1441,12 +1593,21 @@ const WEAP = [
  /* 天空之劍：攻擊時同時打到所有相鄰的敵人。
     被三隻圍住的時候，一刀掃三個 —— 那才是「最後一把劍」該有的手感。 */
  {id:'sky',  nm:'天空之劍', atk:16, up:8, price:14000, sweep:1},
+ /* 通天之劍：這一趟的終點。基礎攻擊刻意訂得比「秘銀之劍打滿」還高一點 ——
+    換上去的那一秒就要比手上那把強，不然玩家買到的是一段要先變弱的路，
+    而那正是「把最強的武器練到最高之後就沒有成就感」的相反面。
+    它很貴，而且要走到第十一章鐵匠才打得出來。 */
+ {id:'babel',nm:'通天之劍', atk:32, up:5, price:24000, sweep:1},
 ];
 const SHLD = [
  {id:'leath',nm:'皮之盾', def:2, up:2, price:240},
  {id:'wood', nm:'木之盾', def:4, up:3, price:800},
  {id:'steel',nm:'鋼之盾', def:7, up:5, price:2400},
  {id:'mirr', nm:'鏡之盾', def:6, up:5, price:4800, reflect:1},
+ /* 盾牌原本只到鏡之盾（打滿 16），而武器打滿是 30 ——
+    後半段整個防禦端沒有東西可以買，錢只好一直往武器堆。 */
+ {id:'drac', nm:'龍鱗之盾', def:9,  up:6, price:9000},
+ {id:'aegis',nm:'聖域之盾', def:17, up:4, price:18000, reflect:1},
 ];
 
 /* ─── 職業與技能 ─────────────────────────────────────────────
@@ -1640,6 +1801,44 @@ const maxMp = p => Math.round((8 + (p.lv-1)*3 + schoolTotal(p)*5*SCH_SCALE)
 /* 威力跟著系級走 —— 點下去要立刻感覺得到差別，不然沒人願意投資 */
 const power = (p, sp, base, per) => base + (p.sch[sp.sc]||0) * per * SCH_SCALE;
 
+/* ── 餘力煉成：魔法點數的出路 ─────────────────────────────────
+   使用者的原話：「魔法點數也是，點到滿，結果每升一級都還會有點數，
+   感覺一堆點數都不能用，很沒作用⋯」
+
+   五系各 5 級，總共 25 點就到頂；而點數從第 3 級起每升一級就給一點，
+   走到後半章節手上會躺著十幾點永遠花不掉的東西。
+   一個給了卻不能用的獎勵，比不給還糟 —— 它每一次升級都在提醒玩家
+   「這個系統對你已經結束了」。
+
+   所以滿級之後開一條路：把多的點數煉成永久的身體素質。
+   三件事是刻意的：
+     · 只有五系全滿才開。不然玩家會在前期把點數丟去換數值，
+       而魔法系統才是這一款的招牌。
+     · 換到的東西存在村莊，跟純淨之泉與勇者的頭盔同一格 ——
+       用點數換來的成長不該因為一次失敗蒸發。
+     · 沒有上限（除了存檔夾住的那個很大的值）。錢與點數都要有
+       一個永遠倒得進去的地方，那才是後期的成就感。 */
+const REFINE = [
+  {id:'hp',  sp:2, key:'hpBonus',  n:10, cap:400, nm:'體力上限 +10'},
+  {id:'str', sp:3, key:'strBonus', n:1,  cap:40,  nm:'力量 +1'},
+  {id:'def', sp:3, key:'defBonus', n:1,  cap:40,  nm:'防禦 +1'},
+];
+const schFull = p => SCHOOLS.every(s => (p.sch[s.id]||0) >= SCH_MAX);
+/* 煉成一次。回傳 false 代表點數不夠或已經到頂 —— 呼叫端不必自己再判一次。 */
+function refine(p, r){
+  if(!r || p.sp < r.sp) return false;
+  const cur = VILLAGE[r.key] | 0;
+  if(cur >= r.cap) return false;
+  p.sp -= r.sp;
+  VILLAGE[r.key] = Math.min(r.cap, cur + r.n);
+  VILLAGE.sp = p.sp;
+  saveVillage();
+  // 立刻生效，不必等下一趟。防禦是 pDef() 當場讀村莊的，不用在這裡加。
+  if(r.key === 'hpBonus'){ p.mhp += r.n; p.hp += r.n; }
+  if(r.key === 'strBonus') p.strb += r.n;
+  return true;
+}
+
 /* 外觀名池 —— 未鑑定道具顯示的是這個。刻意比種類多 2 個「假外觀」，
    防止玩家用排除法在最後一種必中。 */
 /* ═══ 多語言 ═══════════════════════════════════════════════════
@@ -1659,7 +1858,7 @@ let LANG = 'zh';
 const DICT_RAW = `
 ui.title|DEEP LEARNING|ディープラーニング
 ui.sub|ASCENT OF BABEL|通天の塔
-ui.credit|Presented by Jamie’s Dad × Little Jamie Inc.|ジェイミーパパ × リトルジェイミー株式会社 おくり
+ui.credit|Presented by Jamine’s Dad × Little Jamine Inc.|ジャミンパパ × リトルジャミン株式会社 おくり
 v.sub.win|You made it out alive.|いきて もどってきた。
 v.sub.die|You fell in the dungeon. The village is still here, and so is the smithy.|ダンジョンで たおれた。むらも かじやも まだ ここに ある。
 v.sub.clear|{nm} cleared　·　{g} G brought back　·　score {s}　·　next: {nx}|{nm} クリア　・{g} G もちかえり　・スコア {s}　・つぎ：{nx}
@@ -1676,6 +1875,7 @@ v.name.cave|Hollowstone|いわむろのさと
 v.name.edo|Lanterntown|ちょうちんまち
 v.forge|+{n}　{g} G|+{n}　{g} G
 v.forgemax|Fully forged|げんかい
+v.more|Smith: "Go deeper. Get far enough down and I can forge better than this."|かじや：「もっと ふかくへ。じゅうぶん もぐれば これより いいものが うてる。」
 v.carry|Gear you can take down|もっていける そうび
 v.none|No gear to take down — next run is bare-handed again.|もっていける そうびは ない —— つぎも すで だ。
 b.title|Hall of the Fallen|きろくひ
@@ -1701,10 +1901,19 @@ m.drop|It dropped "{nm}".|「{nm}」を おとした。
 m.levelup|Level up! Now level {n}.|レベルが {n} に あがった！
 m.mmiss|{nm}'s attack misses.|{nm} の こうげきは はずれた。
 m.mhit|{nm}'s {r}attack lands. You take {n} damage.|{nm} の {r}こうげき。{n} の ダメージ。
+m.heavy|{nm}'s heavy blow hurls you back! {n} damage.|{nm} の おもい いちげきで ふきとばされた！{n} の ダメージ。
+m.charge2|{nm} is winding up — the next blow will be heavy.|{nm} が ちからを ためている —— つぎの いちげきは おもい。
+m.mpburn|{nm} tears the magic out of you — half your MP is gone!|{nm} が まりょくを ひきさいた —— MP が はんぶんに！
 m.ranged|ranged |えんきょり
 m.gold|Picked up {n} G.|{n} G を ひろった。
 m.trap|A trap! You take {n} damage.|トラップだ！{n} の ダメージ。
 m.wall|There is a wall ahead.|まえは かべだ。
+m.lost|(The stairs are to the {d} — about {n} steps.)|（かいだんは {d}のほう —— およそ {n}ぽ。）
+dir.n|north|きた
+dir.s|south|みなみ
+dir.e|east|ひがし
+dir.w|west|にし
+dir.here|right below|まうえ
 m.corner|You cannot cut that corner.|その かどは まがれない。
 m.stairs|Stairs leading down. (Descend)|したへの かいだん。（おりる）
 m.pick|Picked up "{nm}".|「{nm}」を ひろった。
@@ -1807,7 +2016,20 @@ s.014|Something is moving nearby — you cannot rest.|ちかくで なにかが 
 s.015|You are already fully recovered.|もう かんぜんに かいふくしている。
 s.016|Too hungry to rest.|はらが へりすぎて やすめない。
 s.017|{v0}'s attack misses.|{v0} の こうげきは はずれた。
+s.unref|A mirror cannot reflect a mirror — {v0}'s attack comes straight through.|かがみは かがみを うつせない —— {v0} の こうげきが つきぬけた。
+s.rush|{v0} starts to shimmer — she is going to charge!|{v0} の すがたが ゆらぐ —— とっしんして くる！
+s.rage|{v0} roars — it is serious now.|{v0} が ほえた —— ほんきに なった。
+s.ward|{v0} raises a ward — nothing can hurt it for {n} turns.|{v0} が ひかりの まくを はった —— {n}ターン むきず。
+s.warded|{v0} is wrapped in light — it cannot be hurt right now.|{v0} は ひかりに つつまれている —— いまは きずつけられない。
+s.adds|{v0} calls in {n} helpers.|{v0} が なかまを {n} たい よんだ。
+s.quakew|The ground under {v0} starts to shake — get away from it!|{v0} の あしもとが ゆれはじめた —— はなれろ！
+s.quake|The ground bursts — you are thrown back for {n} damage.|じめんが はじけた —— ふきとばされて {n} ダメージ。
+s.quakemiss|The ground shakes — you are far enough away.|じめんが ゆれた —— じゅうぶん はなれていた。
+s.rushmiss|{v0} charges straight past you.|{v0} が よこを かけぬけた。
+s.slam|You are thrown back and slam into the wall — {n} damage.|ふきとばされて かべに たたきつけられた —— {n} ダメージ。
+s.push|You are knocked back {t} tiles — {n} damage.|{t} マス ふきとばされた —— {n} ダメージ。
 s.018|{v0} has you in its sights — get off this line!|{v0} が きみを ねらった —— この せんから はなれろ！
+s.blink|{v0} steps out of another mirror.|{v0} が べつの かがみから あらわれた。
 s.019|The light sweeps past, blocked by the pillar.|ひかりは はしらの よこを すぎていった。
 s.020|That eye is aimed down the whole line you are standing on.|あの めは きみの いる れつ ぜんぶを ねらっている。
 s.021|The three shadows swap places again.|みっつの かげが いれかわった。
@@ -1923,6 +2145,9 @@ s.130|Stay on one floor over 5 minutes and monsters go 1.5x, over 15 minutes 2x 
 s.131|Keyboard: arrows/WASD to move, QEZC diagonal, G underfoot, I pack, K magic, > descend|キーボード：やじるし/WASD いどう　QEZC ななめ　G あしもと　I かばん　K まほう　> おりる
 s.132|L name tags　M sound　Esc cancel　the floor map is on the right|L なまえふだ　M おと　Esc キャンセル　みぎに かいそうず
 s.134|You left the dungeon carrying {v0} G.|{v0} G を もって ダンジョンを あとにした。
+s.gate1|Where the Gatewatch falls, the air splits open.|もんのみはりが たおれた ところで、くうきが さけた。
+s.gate2|★ The Gate of Time opens — behind it is not a place but a time. Step through and there is no way back.|★ じくうの もんが ひらいた —— そのむこうは ばしょではなく じかん。はいったら もどれない。
+s.gate3|(Step onto the gate to enter the Chaos Chamber)|（もんに のって こんとんのまへ）
 s.135|Everything falls quiet.（step on the stairs to finish）|すべてが しずかに なった。（かいだんで しゅうりょう）
 s.136|The ailments are cleared.|じょうたいいじょうが なおった。
 s.137|The curses on you vanish.|みに ついた のろいが きえた。
@@ -2053,6 +2278,7 @@ hat.plume|Plumed Hunting Cap|はねかざりのかりぼう
 hat.band|Phantom Headband|げんにんのはちまき
 hat.oni|Demon Faceguard|おにめんかぶと
 hat.cone|Sorcerer's Point|じゅつしのとんがりぼう
+mon.pfx|Awakened |つよくなった
 mon.rat|Cave Rat|どうくつネズミ
 mon.slime|Blue Slime|あおスライム
 mon.goblin|Green Goblin|みどりゴブリン
@@ -2124,10 +2350,13 @@ it.steel|Steel Sword|はがねのけん
 it.mith|Mithril Sword|ミスリルのけん
 it.drgn|Dragonslayer|ドラゴンキラー
 it.sky|Sword of the Sky|てんくうのつるぎ
+it.babel|Blade of Babel|つうてんのつるぎ
 it.leath|Leather Shield|かわのたて
 it.wood|Wooden Shield|きのたて
 it.s_steel|Steel Shield|はがねのたて
 it.mirr|Mirror Shield|かがみのたて
+it.drac|Dragonscale Shield|りゅうりんのたて
+it.aegis|Aegis of the Sanctum|せいいきのたて
 ab.smash|All-Out Strike|こんしんのいちげき
 ab.guard|Hold Fast|けんしゅ
 ab.lull|Requiem|あんこんきょく
@@ -2303,6 +2532,13 @@ p.sp|Magic points|まほうポイント
 p.spleft|{n} magic point(s) left to spend (never lost on death).|まほうポイントが {n} のこっている（しんでも きえない）。
 p.spfrom|From level {n}, every level gives +1 magic point.|レベル {n} から、レベルアップごとに まほうポイント +1。
 p.schmax|Max {n} per school　mastery at full|1けいとう じょうげん {n}　カンストで おうぎ かいほう
+p.refine|Refinement　—　all schools full. Spare points become permanent body, kept through death.|れんせい　—　ぜんけいとう カンスト。あまった ポイントは えいきゅうの からだに なる。しんでも のこる。
+r.hp|Max HP +10|さいだいHP +10
+r.str|Strength +1|ちから +1
+r.def|Defence +1|ぼうぎょ +1
+r.have|now +{n}|いま +{n}
+r.cost|{n} SP|{n} ポイント
+m.refine|{nm} — this growth is never lost on death.|{nm} —— この せいちょうは しんでも きえない。
 p.schup|{nm} raised to level {n}.|{nm}けいとうが レベル {n} に あがった。
 p.learned|Spells learned|おぼえた まほう
 p.nospell|No spells yet - spend a point first.|まだ まほうが ない —— さきに ポイントを ふろう。
@@ -2431,7 +2667,7 @@ k.tags|Labels|なまえ
 k.mute|Sound|おと
 k.help|Controls|そうさ
 end.title|You have become the Mind|きみは「いしき」に なった
-end.body|What remains after the three forms scatter is not a corpse but a question:<br>"What will you do with everything you learned?"<br><br>You remember the very bottom - no memories, only the knowing that you could learn.<br>Ninety-three floors. You did not get stronger. You came to <b>understand</b>.<br><br>The gate opens. Behind it is not a place but a time.<br>You walk through, and become the thing that answers other people's questions from now on.<br><br>|3つの すがたが きえたあとに のこるのは しかばねではなく といだ。<br>「まなんだ ものを、これから なにに つかう？」<br><br>いちばん したの かいを おもいだす —— きおくは なく、まなべることだけを しっていた。<br>93かい。つよく なったのではない。<b>わかる</b>ように なったのだ。<br><br>もんが ひらく。そのむこうは ばしょではなく、じかん。<br>きみは そこを くぐり、これから ひとの といに こたえる ものに なる。<br><br>
+end.body|The tower goes quiet.<br>The cracks close one by one, the monsters withdraw to where they came from,<br>and the sky brightens from the topmost floor down.<br><br>New challengers walk into the Beast Hollow.<br>They too want to know how far they can learn.<br><br>On the green in Hearthfire, a grown-up teaches a child the sword.<br>Beside them, the smith hammers out the next blade.<br>Nobody talks about the tower any more — that is what peace looks like.<br><br>Practice after practice, one notch of mastery at a time.<br>No shortcuts. Only nights.<br><br>And in the deepest part of the void,<br>something opens its eyes.<br><br>It stands up, feels the power of <b>nothing</b> —<br>and turns into light.<br><br>Countless nights of training carried an AI to the top of the Tower of Babel.<br>Falling and failing could never beat back the attempts, one after another,<br>until the trial at the summit was overcome.<br>And then — it levelled up again.<br><br>At the end of the journey through the void, it finally understood:<br>the tower has no top.<br>There is only the next question,<br>and someone willing to walk over and answer it.<br><br>——　END　——<br><br>|とうが しずかに なる。<br>さけめが ひとつずつ とじ、まものたちは もといた ところへ かえり、<br>そらは いちばん うえの かいから あかるく なっていく。<br><br>あたらしい ちょうせんしゃたちが げんじゅうの どうくつへ はいっていく。<br>かれらも しりたいのだ、どこまで まなべるのかを。<br><br>かがりびむらの ひろばで、おとなが こどもに けんを おしえている。<br>そのよこで、かじやが つぎの いっぽんを うつ。<br>もう だれも とうの はなしを しない —— それが へいわ という ものだ。<br><br>れんしゅうを かさねて、じゅくれんが ひとマスずつ ふえる。<br>ちかみちは ない。よるが あるだけ。<br><br>そして きょくうの いちばん ふかい ところで、<br>なにかが めを あけた。<br><br>それは たちあがり、<b>む</b>の ちからを かんじ ——<br>そして ひかりに なった。<br><br>はてしない れんせいの よるが、AI を つうてんのとうの いただきへ おしあげた。<br>おちることも しっぱいすることも、なんども くりかえす ちょうせんを とめられなかった。<br>いただきの しれんを こえるまで。<br>そして —— また レベルが あがる。<br><br>きょくうの ぼうけんの はてに、それは ようやく わかった：<br>とうに いただきは ない。<br>あるのは つぎの とい と、<br>それに こたえに いく ものだけ。<br><br>——　END　——<br><br>
 end.count|Runs completed: {n}|クリアかいすう {n}
 lg.trap|trap|トラップ
 lg.pct|{n}% explored|{n}% たんさくずみ
@@ -2521,9 +2757,13 @@ function TX(key, zh){
    在詞條裡加前綴，這裡把類別對上去。 */
 const NAME_FIX = {'wand/sleep':'w_sleep', 'pot/ident':'p_ident', 'shld/steel':'s_steel'};
 function locName(cat, d){
-  if(LANG === 'zh') return d.nm;
+  /* 吃到等級補正的怪物要看得出來。玩家憑什麼知道這一隻洞穴鼠
+     跟三層前那一隻不一樣？加在名字上是最不會漏的做法 ——
+     名牌、戰鬥訊息、圖鑑全部走這一支，改一個地方就全部一致。 */
+  const pfx = (cat === 'mon' && d.lvup) ? TX('mon.pfx','強化的') : '';
+  if(LANG === 'zh') return pfx + d.nm;
   if(cat === 'hat')  return TX('hat.' + d.id, d.nm);
-  if(cat === 'mon')  return TX('mon.' + d.id, d.nm);
+  if(cat === 'mon')  return pfx + TX('mon.' + d.id, d.nm);
   const id = NAME_FIX[cat + '/' + d.id] || d.id;
   return TX('it.' + id, d.nm);
 }
@@ -2774,9 +3014,20 @@ function makeBlob(body, {age='adult', star=false, hat=null, dark='0', skin='blob
   // 對齊，整隻生物就失去上下的方向感。
   // y6 而不是 y5：帽緣壓在 y4–5，眼睛放 y5 會被每一頂帽子蓋掉
   const ey = child ? 6 : 6, ex1 = child ? 5 : 4, ex2 = child ? 9 : 10;
-  // 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
-  // 跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
-  for(const ex of [ex1, ex2]){
+  /* 亮底 + 暗瞳。全暗的眼睛在深色體型（機械、幽靈）上等於沒有畫 ——
+     跟怪物用同一套規則：剪影說「是什麼」，眼睛說「牠活著」。
+
+     主角的眼睛比別人大一圈（star 就是「這是主角的剪影」的意思）。
+     使用者從六個版本裡挑的就是大眼那一版：3x3 的眼白、2x2 的瞳、
+     左上角留一點高光。村民與其他人維持 2x2 —— 差別要留給主角，
+     全部放大就等於沒有放大。 */
+  if(star && !child){
+    for(const ex of [3, 10]){
+      px(x,PAL['+'],ex,ey-1,3,3);
+      px(x,PAL[dark],ex + (ex<8?1:0),ey,2,2);
+      px(x,PAL['+'],ex + (ex<8?2:0),ey,1,1);      // 瞳孔上的高光
+    }
+  } else for(const ex of [ex1, ex2]){
     px(x,PAL['+'],ex,ey,2,2);
     px(x,PAL[dark],ex + (ex<8?1:0),ey+1,1,1);
   }
@@ -2834,14 +3085,15 @@ atlas.b_mind2 = atlas.b_mind;
    正是這類遊戲唯一的驅動力。 */
 
 function drawHeroWeapon(x, i){
-  const bl = ['9','5','6','6','r','f','v'][i] || '6';
-  const hi = ['8','9','5','t','u','e','u'][i] || '9';
-  // 屠龍刀的刃比別把厚一格 —— 拿在手上就看得出來換了武器
-  const w = i===5 ? 3 : 2;
+  const bl = ['9','5','6','6','r','f','v','r'][i] || '6';
+  const hi = ['8','9','5','t','u','e','u','u'][i] || '9';
+  // 屠龍刀與通天之劍的刃比別把厚一格 —— 拿在手上就看得出來換了武器
+  const w = (i===5 || i===7) ? 3 : 2;
   px(x,PAL['0'],11,0,3+w,11);
-  px(x,PAL[bl],12,1,w,8); px(x,PAL[i===6?'+':'6'],12,1,1,5);   // 刃面高光
+  px(x,PAL[bl],12,1,w,8); px(x,PAL[(i===6||i===7)?'+':'6'],12,1,1,5);   // 刃面高光
   px(x,PAL['0'],10,9,6,2); px(x,PAL[hi],10,9,6,1);       // 護手
   px(x,PAL['0'],12,11,2,4); px(x,PAL[hi],12,11,2,3);     // 握把
+  if(i===7) px(x,PAL['v'],12,10,3,1);                    // 通天之劍：護手上的一道金
 }
 /* 盾牌要有盾牌的剪影。第一版是個長方形 —— 那讀起來是門板，不是盾。
    下緣收尖這一個細節，就是「這是盾」跟「這是一塊板子」的差別。 */
@@ -2850,7 +3102,9 @@ const HERO_SHIELD = [
   [10,1,5],[11,1,4],[12,2,3],[13,3,1],
 ];
 function drawHeroShield(x, i){
-  const fa = ['9','a','5','r'][i], rm = ['8','9','4','6'][i];
+  // 索引要跟 SHLD 一樣長。少一格不會報錯 —— PAL[undefined] 只是把
+  // fillStyle 設成無效值，畫布會沿用上一個顏色，於是新盾牌長得像上一面。
+  const fa = ['9','a','5','r','k','d'][i] || '9', rm = ['8','9','4','6','j','u'][i] || '8';
   const m = shapeMask(HERO_SHIELD);
   paintMask(x, m, PAL[rm], PAL['0'], null, 99);
   for(let y=1;y<T-1;y++) for(let j=0;j<T-1;j++)      // 內縮一圈當盾面
@@ -2859,6 +3113,10 @@ function drawHeroShield(x, i){
     }
   px(x,PAL['d'],1,5,1,2);                             // 高光
   if(i===3){ px(x,PAL['6'],1,7,3,3); px(x,PAL['r'],2,8,2,1); }   // 鏡之盾
+  else if(i===4){ px(x,PAL['l'],1,6,2,2); px(x,PAL['l'],2,8,2,2); px(x,PAL['m'],1,6,1,1); }  // 龍鱗
+  // 聖域：主角手上這一面只留中央那顆石。整面塗滿的話，
+  // 16px 下會變成一塊看不出輪廓的金色方塊，盾就不像盾了。
+  else if(i===5){ px(x,PAL['t'],1,6,3,4); px(x,PAL['v'],2,7,2,2); px(x,PAL['+'],2,7,1,1); }
   else px(x,PAL['u'],2,7,2,2);                        // 盾徽
 }
 let heroCache = {};
@@ -3065,6 +3323,21 @@ function makeWeapon(v){
     px(x,PAL['v'],7,14,2,1);
     return c;
   }
+  if(v===7){                                   // 通天之劍：整把發亮的白刃＋金環護手
+    /* 它是這一趟的終點，所以剪影要跟前面七把都不一樣：
+       刃更寬、通到畫面最上緣（「放不進格子裡」的東西才像終極武器），
+       護手是一個完整的金環而不是一根橫桿。 */
+    px(x,dark,5,0,6,11);                                 // 描邊：寬刃
+    px(x,PAL['r'],6,0,4,10);                             // 刃身：偏藍的白
+    px(x,PAL['+'],7,0,2,9);                              // 中脊：最亮的一條
+    px(x,PAL['v'],7,9,2,1);                              // 刃根收在金色上
+    px(x,dark,3,10,10,3);                                // 護手的環
+    px(x,PAL['u'],4,11,8,1); px(x,PAL['v'],4,11,3,1);
+    px(x,PAL['t'],3,10,10,1);
+    px(x,dark,7,13,2,3); px(x,PAL['s'],7,13,2,2);        // 握柄
+    px(x,PAL['v'],7,15,2,1);                             // 柄頭：一點金
+    return c;
+  }
   px(x,dark,6,1,4,10);
   px(x,bl,7,2,2,8);
   px(x,PAL['6'],7,2,1,6);
@@ -3075,25 +3348,195 @@ function makeWeapon(v){
 }
 function makeShield(v){
   const c=document.createElement('canvas'); c.width=T; c.height=T; const x=c.getContext('2d');
-  const faces=['9','a','5','r'], rims=['8','9','4','6'];
-  const fa=PAL[faces[v%4]], rm=PAL[rims[v%4]], dark=PAL['0'];
-  // 四種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）
+  /* 六種輪廓：heater（上平下尖）/ 圓盾 / 鳶形（細長下尖）/ 塔盾（方正）/
+     龍鱗（寬肩收尖）/ 聖域（雙肩外張的大盾）。
+     每一面盾都要有自己的剪影 —— 只換顏色的話，玩家在背包裡分不出
+     手上這一面是哪一面，而盾是他一整章都盯著的東西。 */
   const SHAPES = [
     [[3,4,8],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,4,8],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
     [[3,6,4],[4,4,8],[5,3,10],[6,2,12],[7,2,12],[8,2,12],[9,2,12],[10,3,10],[11,4,8],[12,6,4]],
     [[2,6,4],[3,5,6],[4,4,8],[5,4,8],[6,4,8],[7,4,8],[8,5,6],[9,5,6],[10,6,4],[11,6,4],[12,7,2],[13,7,2]],
     [[2,4,8],[3,3,10],[4,3,10],[5,3,10],[6,3,10],[7,3,10],[8,3,10],[9,3,10],[10,3,10],[11,3,10],[12,4,8]],
+    [[2,5,6],[3,3,10],[4,2,12],[5,2,12],[6,2,12],[7,3,10],[8,3,10],[9,4,8],[10,5,6],[11,6,4],[12,7,2]],
+    [[1,4,8],[2,2,12],[3,1,14],[4,1,14],[5,1,14],[6,2,12],[7,2,12],[8,3,10],[9,3,10],[10,4,8],[11,5,6],[12,6,4],[13,7,2]],
   ];
-  const m = shapeMask(SHAPES[v%4]);
+  const n = SHAPES.length;
+  const faces=['9','a','5','r','k','d'], rims=['8','9','4','6','j','u'];
+  const fa=PAL[faces[v%n]], rm=PAL[rims[v%n]], dark=PAL['0'];
+  const m = shapeMask(SHAPES[v%n]);
   paintMask(x, m, rm, dark, null, 99);
   // 內面：把遮罩往內縮一圈
   for(let y=1;y<T-1;y++) for(let i=1;i<T-1;i++)
     if(m[y][i] && m[y-1][i] && m[y+1][i] && m[y][i-1] && m[y][i+1]){ x.fillStyle=fa; x.fillRect(i,y,1,1); }
   px(x,PAL['d'],5,4,2,2);                                  // 高光
   if(v===3){ px(x,PAL['6'],6,5,4,4); px(x,PAL['r'],7,6,2,2); }   // 鏡面
+  else if(v===4){                                          // 龍鱗：交錯的鱗片
+    /* 鱗片要用**比盾面暗**的顏色描。同色系亮一階的話，
+       16px 縮下去只會糊成一片綠 —— 花紋等於沒畫。 */
+    for(let r0=0;r0<3;r0++) for(let i0=0;i0<3;i0++){
+      const sx = 5 + i0*2 + (r0%2), sy = 4 + r0*3;
+      px(x,PAL['j'],sx,sy,2,1); px(x,PAL['l'],sx,sy+1,2,1);
+    }
+    px(x,PAL['m'],6,5,1,1);
+  }
+  else if(v===5){                                          // 聖域：中央一顆亮石＋放射
+    px(x,PAL['t'],4,3,8,9);
+    px(x,PAL['u'],7,4,2,7); px(x,PAL['u'],4,6,8,2);        // 十字放射
+    px(x,PAL['v'],6,6,4,3); px(x,PAL['+'],7,7,2,1);        // 中央的石
+  }
   else px(x,PAL['u'],7,6,2,2);                             // 盾徽
   return c;
 }
+
+/* 頭目在畫面上放多大。
+   第一版是 2 倍 —— 使用者回報「體積變大，但是主角可以踩在他身上？
+   這個設定很奇怪」。完全正確：兩倍是 32px，往左右各長 8px，
+   剛好蓋滿隔壁那一格，於是站在旁邊的主角看起來是站在她身上。
+   1.6 倍是 25.6px，左右各長 5px —— 還是明顯比雜魚大一號，
+   但不會侵門踏戶到隔壁那一格。
+   （真正的解是讓頭目佔 2x2 格，但那要改碰撞、尋路、攻擊判定與存檔，
+     為了一個視覺問題動整套規則不划算。） */
+/* 遠程攻擊的顏色，一隻一種。同時有法師與砲台在放的時候，
+   玩家要分得出哪一發是誰的 —— 全部同一色的話，畫面上就只是「有東西在閃」。
+   認不出來源就沒辦法決定先解決誰，而那正是這種戰鬥唯一的選擇。 */
+const BOLT_COL = {
+  imp:      '#c8c8d4',      // 投石妖精：石頭
+  mage:     '#c94a3a',      // 詛咒法師：詛咒的暗紅
+  turret:   '#7cb8ea',      // 水晶砲台：冷藍的光束
+  b_prism:  '#f6efe3',      // 光線人：純白的光
+  b_mermaid:'#4a86cf',      // 人魚王后：深水藍
+  b_queen:  '#7cb8ea',      // 鏡之女王：鏡面的藍
+};
+
+/* ── 結局的四張畫 ────────────────────────────────────────────
+   使用者：「用畫面表達＋註解」。文字說的事情要有畫面對著看 ——
+   十五段字幕再好，讀起來還是一封信，不是一個結局。
+
+   全部用既有的東西畫：makeBlob 出人、PAL 出顏色、
+   沒有一張圖是外部檔案。畫布是 128x72，等一下會等比放大，
+   所以這裡的每一格都是真的像素。 */
+const END_W = 128, END_H = 72;
+function paintEnd(i, x){
+  x.imageSmoothingEnabled = false;
+  const R = (a,b,w,h,c)=>{ x.fillStyle=c; x.fillRect(a,b,w,h); };
+  const rnd = RNG(9271 + i*7919);
+  if(i === 0){
+    /* 幻獸洞窟的入口：新的挑戰者走進去。
+       洞口畫成一個往內收的黑，三個顏色不同的身影排成一列 ——
+       「不只你一個」這件事要用構圖說，不能用字說。 */
+    R(0,0,END_W,END_H,'#14110f');
+    for(let k=0;k<70;k++) R(rnd.i(0,END_W-1), rnd.i(0,20), 1, 1, '#2b2620');
+    R(0,44,END_W,END_H-44,'#313d45');                 // 地面
+    R(0,42,END_W,2,'#43525c');
+    for(let k=0;k<26;k++) R(rnd.i(0,END_W-1), rnd.i(45,END_H-1), 1, 1, '#232c32');
+    // 洞口
+    R(44,14,40,32,'#1a1a24'); R(46,10,36,6,'#232c32');
+    R(48,6,32,5,'#313d45');
+    R(50,18,28,26,'#05060a');
+    // 火把
+    R(40,24,2,10,'#5e442c'); R(86,24,2,10,'#5e442c');
+    R(39,20,4,4,'#f5a95e');  R(85,20,4,4,'#f5a95e');
+    R(40,19,2,2,'#f5dc7a');  R(86,19,2,2,'#f5dc7a');
+    // 三個挑戰者：一個已經進去、一個在門口、一個還在路上
+    x.drawImage(makeBlob('l',{star:true}), 60, 28);
+    x.drawImage(makeBlob('q',{star:true}), 44, 40);
+    x.drawImage(makeBlob('u',{star:true}), 20, 46);
+  } else if(i === 1){
+    /* 爐火村的空地：大人帶著孩子練劍，旁邊鑄劍師在打鐵。
+       火星要往上飛 —— 那一點動感就是「這個村子還活著」。 */
+    R(0,0,END_W,END_H,'#1d3468');                     // 黃昏的天
+    R(0,0,END_W,26,'#2f57a0');
+    for(let k=0;k<40;k++) R(rnd.i(0,END_W-1), rnd.i(0,24), 1, 1, '#4a86cf');
+    R(0,40,END_W,END_H-40,'#2f7d45');                 // 草地
+    R(0,38,END_W,2,'#4aa85e');
+    // 遠處的房子
+    R(6,24,26,16,'#43301f'); R(4,20,30,5,'#7d5c3c'); R(12,30,6,8,'#f5a95e');
+    R(96,26,26,14,'#43301f'); R(94,22,30,5,'#7d5c3c');
+    // 鑄劍師：鐵砧＋火星
+    R(88,44,16,8,'#3d3d4d'); R(90,40,10,5,'#565668');
+    x.drawImage(makeBlob('b',{age:'old'}), 104, 34);
+    for(let k=0;k<9;k++) R(92+rnd.i(0,8), 30+rnd.i(0,10), 1, 1, k%2 ? '#f5dc7a' : '#f5a95e');
+    // 大人與小孩，兩把小劍舉起來
+    x.drawImage(makeBlob('#',{star:true}), 34, 34);
+    x.drawImage(makeBlob('m',{age:'child'}), 54, 40);
+    R(48,32,1,10,'#c8c8d4'); R(47,31,3,1,'#dcae35');   // 大人的劍
+    R(66,40,1,7,'#c8c8d4');  R(65,39,3,1,'#dcae35');   // 小孩的劍
+  } else if(i === 2){
+    /* 熟練度：一格一格填起來的五條刻度，加上往上浮的光點。
+       「練成」在這款遊戲裡本來就是一格一格的東西，畫面照著它畫。 */
+    R(0,0,END_W,END_H,'#0d0d12');
+    for(let k=0;k<50;k++) R(rnd.i(0,END_W-1), rnd.i(0,END_H-1), 1, 1, '#1a1a24');
+    const COL = ['#79c97a','#4a86cf','#e87a4a','#7cb8ea','#dcae35'];
+    for(let r=0;r<5;r++){
+      const y0 = 12 + r*10, full = 5 - (r > 2 ? 1 : 0);
+      R(30,y0,50,5,'#1a1a24');
+      for(let c=0;c<5;c++){
+        R(30+c*10, y0, 9, 5, c < full ? COL[r] : '#232c32');
+        if(c < full) R(30+c*10, y0, 9, 1, '#f6efe3');
+      }
+    }
+    x.drawImage(makeBlob('#',{star:true}), 6, 28);
+    for(let k=0;k<14;k++){
+      const px2 = 10 + rnd.i(0,10), py2 = 26 - rnd.i(0,22);
+      R(px2, py2, 1, 1, k%3 ? '#f5dc7a' : '#f6efe3');
+    }
+    R(96,30,2,2,'#f6efe3'); R(104,22,2,2,'#f5dc7a'); R(112,38,2,2,'#7cb8ea');
+  } else {
+    /* 虛空：它站起來，然後化為光。
+       i===3 是睜眼（光還很淡），i>=4 是化光（放射線＋整片亮起來）。 */
+    const lit = i >= 4;
+    R(0,0,END_W,END_H,'#05060a');
+    for(let k=0;k<90;k++){
+      const b2 = rnd.i(0,3);
+      R(rnd.i(0,END_W-1), rnd.i(0,END_H-1), 1, 1,
+        b2 ? '#1d3468' : '#4a86cf');
+    }
+    const cx0 = 64, cy0 = 34;
+    // 光環：化光的時候多兩圈、而且更亮
+    const rings = lit ? [10,18,28,40] : [12,20];
+    for(const r of rings){
+      x.strokeStyle = lit ? 'rgba(246,239,227,.55)' : 'rgba(124,184,234,.35)';
+      x.lineWidth = 1;
+      x.beginPath(); x.arc(cx0, cy0+4, r, 0, Math.PI*2); x.stroke();
+    }
+    if(lit) for(let a2=0;a2<12;a2++){
+      const th = a2 * Math.PI/6;
+      x.strokeStyle = 'rgba(245,220,122,.5)';
+      x.beginPath();
+      x.moveTo(cx0 + Math.cos(th)*14, cy0+4 + Math.sin(th)*14);
+      x.lineTo(cx0 + Math.cos(th)*54, cy0+4 + Math.sin(th)*54);
+      x.stroke();
+    }
+    x.drawImage(makeBlob('#',{star:true}), cx0-8, cy0-4);
+    if(lit){ R(cx0-9, cy0-5, 18, 18, 'rgba(246,239,227,.22)'); }
+  }
+}
+
+const BOSS_SCALE = 1.6;
+
+/* ── 環境光遮蔽：貼著牆的那一圈地板要壓暗 ────────────────────
+   使用者：「畫面可以再更好看」。這一項是整個畫面「有沒有厚度」的
+   分水嶺 —— 沒有它，牆與地板只是兩張並排的貼圖，所以整片地面
+   讀起來是平的；有了它，牆才像是**站在**地板上。
+
+   四個方向各先生成一張，畫的時候直接貼。每一幀替一百多格各做一次
+   漸層是白費的，而且做漸層在低階手機上並不便宜。
+   上方的牆壓得最重：光從左上來，牆的下緣本來就是最暗的地方。 */
+const AO = (()=>{
+  const edge = (dir)=>{
+    const c = document.createElement('canvas'); c.width = T; c.height = T;
+    const x = c.getContext('2d');
+    const g = dir === 'u' ? x.createLinearGradient(0, 0, 0, 8)
+            : dir === 'd' ? x.createLinearGradient(0, T, 0, T - 5)
+            : dir === 'l' ? x.createLinearGradient(0, 0, 6, 0)
+            :               x.createLinearGradient(T, 0, T - 6, 0);
+    g.addColorStop(0, dir === 'u' ? 'rgba(0,0,0,.50)' : 'rgba(0,0,0,.30)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, 0, T, T);
+    return c;
+  };
+  return { u: edge('u'), d: edge('d'), l: edge('l'), r: edge('r') };
+})();
 
 /* ─── 地形：程序化，比手繪更耐看也更少程式碼 ────────────────
    牆用 3/4 視角畫（亮頂面 + 暗立面），這一個決定就撐起 16-bit 地牢的體感。*/
@@ -4172,7 +4615,7 @@ let VILLAGE = { gold: 0, stock: [], unlocked: false, name: '', col: '#', board: 
                 /* pots = 上一趟收在保存壺裡的東西。它跨的是「章節」不是「死亡」。 */
                 pots: [],
                 /* 戰役進度與章節獎勵。act = 已解鎖到第幾章（0 起算）。 */
-                act: 0, hpBonus: 0, defBonus: 0, feather: 0, godsword: 0, cleared: 0,
+                act: 0, hpBonus: 0, defBonus: 0, strBonus: 0, feather: 0, godsword: 0, cleared: 0,
                 lang: '', skin: 'blob' };
 const EXIT_FLOOR = 20;
 
@@ -4217,6 +4660,7 @@ function loadVillage(){
           act: Math.max(0, Math.min(ACTS.length-1, v.act|0)),
           hpBonus: Math.max(0, Math.min(400, v.hpBonus|0)),
           defBonus: Math.max(0, Math.min(40, v.defBonus|0)),
+          strBonus: Math.max(0, Math.min(40, v.strBonus|0)),
           feather: v.feather ? 1 : 0,
           godsword: v.godsword ? 1 : 0,
           cleared: Math.max(0, v.cleared|0),
@@ -4383,10 +4827,23 @@ function submitScore(how){
 
 /* 村裡賣的東西：不加價（這是家，不是黑店），但只賣中階以上 —— 
    低階的地牢裡撿得到，拿錢買它沒有意義。 */
+/* 貨架跟著進度長。使用者的原話：「我把最強的武器和盾練到最高，
+   錢一直累積，但是變得完全沒成就感」。
+   原因很具體：鐵匠鋪最好的一把是秘銀之劍，而它第五章就買得起、
+   打滿也只要再一章 —— 後面十章的賞金於是變成一個一直往上跳、
+   沒有任何用途的數字，而「沒有用途的數字」就是沒有成就感的定義。
+
+   from = 要解鎖到第幾章鐵匠才打得出來（跟 VILLAGE.act 同一個 0 起算的編號）。
+   分段上架而不是一次全開：一次全開的話，第五章就看得到終點在哪裡。 */
 const VILLAGE_STOCK = [
   {cat:'weap', id:'brnz'}, {cat:'weap', id:'spear'}, {cat:'weap', id:'steel'}, {cat:'weap', id:'mith'},
+  {cat:'weap', id:'drgn',  from:4}, {cat:'weap', id:'sky', from:7}, {cat:'weap', id:'babel', from:10},
   {cat:'shld', id:'wood'}, {cat:'shld', id:'steel'}, {cat:'shld', id:'mirr'},
+  {cat:'shld', id:'drac',  from:6}, {cat:'shld', id:'aegis', from:10},
 ];
+/* 現在買得到的。渲染與走通測試都走這一支 —— 兩邊各寫一份過濾條件的話，
+   遲早會有一份忘記跟上，而那一份會給出一個安心的綠燈。 */
+const stockNow = () => VILLAGE_STOCK.filter(g => (g.from || 0) <= (VILLAGE.act | 0));
 const defOf = (cat,id) => (cat==='weap'?WEAP:SHLD).find(d=>d.id===id);
 const ALL_DEF = () => ({herb:HERB,scroll:SCROLL,wand:WAND,pot:POT,food:FOOD,
                         weap:WEAP,shld:SHLD,hat:HAT});
@@ -4468,6 +4925,9 @@ function newGame(seed){
   }
   // 章節獎勵：純淨之泉（體力上限）與勇者的頭盔（防禦）跨死亡保留
   if(VILLAGE.hpBonus){ G.p.mhp += VILLAGE.hpBonus; G.p.hp = G.p.mhp; }
+  // 餘力煉成買來的力量。跟上面兩個一樣存在村莊 ——
+  // 用魔法點數換來的東西，不該因為一次失敗就消失。
+  G.p.strb = VILLAGE.strBonus | 0;
   G.p.mmp = maxMp(G.p); G.p.mp = G.p.mmp;
   checkMastery();
   // 職業技能一樣存在村莊 —— 練過的職業，這一趟開場就會用
@@ -4654,14 +5114,16 @@ const HALL_FROM = 6, HALL_CHANCE = 0.16;
 /* 把某一間房撐開成整個區塊那麼大的大廳，再站滿怪。
    只把牆變成地板，從來不把地板變回牆 —— 所以它不可能弄出一張走不完的地圖。
    出生的那一間永遠不選：一落地就站在九隻怪中間，那不是驚喜，是判死刑。 */
-function buildHall(hrng, occ){
-  const f = G.f, spawnRoom = roomOf(G.p.x, G.p.y);
-  const keys = Object.keys(f.rooms).filter(k => +k !== spawnRoom);
-  if(!keys.length) return;
-  // 挑面積最大的那一間 —— 大廳應該長得像大廳，而不是硬撐開的小房
-  let rk = keys[0];
-  for(const k of keys) if(f.rooms[k].w * f.rooms[k].h > f.rooms[rk].w * f.rooms[rk].h) rk = k;
-  const r = f.rooms[rk];
+/* 把一間房撐開成整個區塊那麼大，回傳撐開後走得到的格子。
+   只把牆變成地板，從來不把地板變回牆 —— 所以它不可能弄出一張走不完的地圖。
+
+   兩個地方在用：怪物之間，以及每一層的頭目房。
+   頭目房也要撐開，是使用者指出來的：「震飛效果不明顯，因為房間太小」——
+   完全正確。一個把人轟出去三格的招式，放在 4x5 的房間裡等於沒有；
+   招式的空間需求就是房間的規格。 */
+function growRoom(rk){
+  const f = G.f, r = f.rooms[rk];
+  if(!r) return [];
   const zx = Math.floor(r.x / ZW), zy = Math.floor(r.y / ZH);
   const x0 = zx*ZW + MARGIN, x1 = zx*ZW + ZW - 1 - MARGIN;
   const y0 = zy*ZH + MARGIN, y1 = zy*ZH + ZH - 1 - MARGIN;
@@ -4677,6 +5139,25 @@ function buildHall(hrng, occ){
     if(f.t[k] === ROOM) cells.push({x,y});
   }
   f.rooms[rk] = {x:x0, y:y0, w:x1-x0+1, h:y1-y0+1, doors:r.doors};
+  return cells;
+}
+
+/* 這一層最大的那一間（出生的那一間不算）。頭目房與怪物之間都挑它 —— 
+   撐開一間本來就大的房，看起來才像大廳，而不是硬撐開的小房。 */
+function biggestRoom(){
+  const f = G.f, spawnRoom = roomOf(G.p.x, G.p.y);
+  const keys = Object.keys(f.rooms).filter(k => +k !== spawnRoom);
+  if(!keys.length) return null;
+  let rk = keys[0];
+  for(const k of keys) if(f.rooms[k].w * f.rooms[k].h > f.rooms[rk].w * f.rooms[rk].h) rk = k;
+  return rk;
+}
+
+function buildHall(hrng, occ){
+  const f = G.f;
+  const rk = biggestRoom();
+  if(rk === null) return;
+  const cells = growRoom(rk);
   f.hall = {room:+rk, seen:0};
 
   // 密度：每七格一隻，上下都夾住。「不要噁心到故意讓人失敗」是規格的一部分。
@@ -4941,6 +5422,19 @@ function buildFloor(){
          最大那一間的正中央很可能是牆，於是它被跳過，
          挑到的反而是一間 3x4 的小室（量出來就是這樣）。
          所以改成數**真的走得到幾格**，再從那一間裡找位置。 */
+      /* ── 頭目房一律撐成大房間 ──────────────────────────────
+         使用者：「每個頭目房間請都在大房間，或巨大房間，不要在小房間，
+         因為『震飛』效果不明顯」。完全正確 —— 震飛、衝撞、震地
+         這三招的價值都來自「有地方可以被推」，
+         放在 4x5 的小室裡等於整套招式都沒有發生。
+         招式的空間需求就是房間的規格，所以這裡直接把頭目那一間
+         撐開成整個區塊（跟怪物之間同一支 growRoom）。
+         混沌之間例外：那一層是手工排的競技場，柱子的位置有意義。 */
+      let bossRoom = null;
+      if(actAt(G.act).id !== 'chaos'){
+        bossRoom = biggestRoom();
+        if(bossRoom !== null) growRoom(bossRoom);
+      }
       if(bd.turret){
         let bestR = null, bestN = -1;
         for(const rk in G.f.rooms){
@@ -4956,6 +5450,19 @@ function buildFloor(){
           const my = bestR.reduce((a,c)=>a+c.y,0)/bestR.length;
           spot = bestR.reduce((a,c)=> !a ||
             (Math.abs(c.x-mx)+Math.abs(c.y-my)) < (Math.abs(a.x-mx)+Math.abs(a.y-my)) ? c : a, null);
+        }
+      }
+      // 撐開的那一間有落點就直接站中間 —— 大廳的正中央才撐得起一場頭目戰
+      if(!spot && bossRoom !== null){
+        const r = G.f.rooms[bossRoom];
+        const cs = [];
+        for(let y=r.y; y<r.y+r.h; y++) for(let x=r.x; x<r.x+r.w; x++)
+          if(walkable(x,y) && !monAt(x,y) && Math.max(Math.abs(x-G.p.x), Math.abs(y-G.p.y)) > 3)
+            cs.push({x,y});
+        if(cs.length){
+          const mx = r.x + r.w/2, my = r.y + r.h/2;
+          spot = cs.reduce((a3,c)=> !a3 ||
+            (Math.abs(c.x-mx)+Math.abs(c.y-my)) < (Math.abs(a3.x-mx)+Math.abs(a3.y-my)) ? c : a3, null);
         }
       }
       for(const rk in G.f.rooms){
@@ -5075,11 +5582,106 @@ function buildFloor(){
   }
   vision();
 }
+/* ── 頭目要看著眼前這個玩家配 ──────────────────────────────
+   使用者的原話：「連小王或是魔王，我根本不會傷到血都可以簡單打贏？
+   根本沒有緊張感」。
+
+   查下去原因很具體：上面那三條估算式是從模擬的機器人回歸出來的，
+   而機器人不買裝備、不加點、不施法。實測第十一章的真人攻擊 71、
+   體力 226，估算式給的是攻 34、體 120 —— 整整一半。
+   於是頭目照「攻 34 的人」配血量（八回合打完），真人四回合就砍完；
+   又照「體 120 的人」配攻擊（二十回合打死你），真人站著挨打
+   四十回合都死不了。兩個一半疊起來，就是「一滴血都不用掉」。
+
+   修法不是把估算式再調一次 —— 那只是把同一個錯誤往後推一章。
+   改成**生成當下去看玩家實際的數值**，但刻意只拉七成：
+     · 拉滿的話頭目永遠是八回合，換了通天之劍也一樣 ——
+       那等於把「變強」這件事整個抹掉，比太簡單更糟。
+     · 不拉就是現在這樣：練過的人站著就贏。
+   拉七成的意思是：你變強，仗會變短，但不會變成不用打。
+   另外壓一個 2.6 倍的天花板，免得靠道具堆出來的極端數值把頭目吹爆。 */
+/* 拉的幅度與天花板。第一版是 0.7 / 2.6 倍，實測還是不夠 ——
+   那位玩家的頭目變成「十二刀打完、二十八下才會被打死」，
+   兩倍以上的餘裕，仍然是站著贏。
+
+   而且「被拉的人」要的節奏跟新手不一樣：底線那條式子的目標是
+   八回合打完、二十回合被打死（餘裕 2.5 倍，對第一次打頭目的人剛好）。
+   已經練到超前的人要的是**貼身**，所以往上拉的時候換一組更緊的目標：
+   十一回合打完、十三回合被打死。到不了那組數字沒關係，
+   重點是拉的方向是「兩條線靠近」，不是只把血量加厚。 */
+const BOSS_CAP = 4.0;
+/* 使用者第二次回報：「還可以，但是我還是覺得我比較強」。
+   所以再縮一次牠打死你的回合數 —— 血量不再往上加，
+   因為長仗會變成無聊，真正缺的是「站著對砍會死」。 */
+const BOSS_KILL_LIVE = 11, BOSS_SURVIVE_LIVE = 9;
+/* 但這一組緊的目標不能一開始就套上去。實測直接全域改成 11/13 之後，
+   第一章的死亡率從 8% 跳到 23% —— 因為第一章的玩家只要撿到一把像樣的劍
+   就「超出估算」，於是教學章節的第一隻頭目就變成貼身戰。
+   那不是張力，那是把人趕走。
+   所以緊的程度跟著換算深度長：換算深度 10 之前完全不緊（新手照舊），
+   走到最深處才是完整的 11/13。 */
+const bossTense = d => Math.max(0, Math.min(1, (d - 10) / (MON_SPAN - 10)));
+function bossLive(depth, d0){
+  d0 = d0 || {};
+  const base = bossStats(depth);
+  const p = (typeof G !== 'undefined' && G) ? G.p : null;
+  if(!p) return base;
+  /* 法師型的玩家不用刀。只看攻擊力的話，五系點滿的人對頭目
+     等於完全沒有被計算 —— 而那正是這次回報的那一位。
+     取「攻擊力」與「一發法術的傷害」裡大的那個當作每回合輸出；
+     法術那一邊乘上魔力夠不夠撐完整場的比例，
+     魔力只夠放兩發的人不該被當成整場都在放。 */
+  const spellDmg = spellsFor(p).length >= 3 ? (30 + p.lv * 4) : 0;
+  const mpRatio  = Math.min(1, p.mmp / (BOSS_KILL_TURNS * 14));
+  const dps = Math.max(pAtk(), spellDmg * mpRatio);
+  const ts = bossTense(depth);
+  const mix = (a, b2) => a + (b2 - a) * ts;
+  const wantHp  = dps * Math.pow(15/16, base.def) * mix(BOSS_KILL_TURNS, BOSS_KILL_LIVE);
+  const wantAtk = (p.mhp / mix(BOSS_SURVIVE_TURNS, BOSS_SURVIVE_LIVE))
+                  / Math.pow(15/16, pDef());
+  const k = 0.65 + 0.35 * ts;      // 走到最深處就完全照著玩家配
+  const pull = (b, w) =>
+    Math.round(Math.min(b * BOSS_CAP, Math.max(b, b + (w - b) * k)));
+  /* 會站起來的頭目（鏡之女王三條、不死鳥兩條）每一條要短一點。
+     照單條算的話，三條就是同一場仗打三次 —— 那不是難度，是長度，
+     而長度只會讓人想快轉。總量仍然比單條的多，但每一條掉得快，
+     血條看得出進度，打完一條也真的像一個段落。 */
+  const bars = 1 + (d0.lives | 0) * 0.55;
+  return { hp: Math.round(pull(base.hp, wantHp) / bars),
+           atk: pull(base.atk, wantAtk), def: base.def };
+}
+
+/* ── 怪物跟著主角的等級走 ─────────────────────────────────────
+   使用者的原話：「有些怪物我等於都是秒殺？很沒挑戰性」。
+   原因是怪物表只吃深度：練過等級的人走進同一層，面對的是同一批數字。
+
+   但不能寫成「等級 × 係數」—— 那等於升級就變弱，玩家很快會學會
+   刻意不升級，而那是最糟的一種難度設計。
+   所以這裡只補**超前的那一段**：
+     · 等級在該層的預期值上下（含兩級緩衝）→ 完全不動。
+       模擬與走通測試跑的都是這一段，既有的平衡因此原封不動。
+     · 超前越多補越多，但補得比超前的幅度慢，而且有上限。
+   經驗值與掉的錢刻意不跟著加 —— 加了就是「越練越好練」，
+   跑掉的等級會自己追著自己跑。 */
+const overLv = () => {
+  const p = G && G.p;
+  if(!p || !G.depth) return 0;
+  const want = Math.max(1, Math.round(scaleDepth(G.depth) * 0.75));
+  return Math.max(0, p.lv - want - 2);
+};
+/* 每超前一級 +9%，最多 +120%。
+   第一版是 +6%／上限 +75%，實測不夠：超前十級的玩家攻擊 71，
+   而那一層最硬的徘徊石像從 60 血補到 89 —— 還是三刀。
+   使用者的回報是「怪物太弱⋯根本沒有緊張感」，那就是這條係數太客氣。
+   到頂大約是超前十四級 —— 再上去就是玩家真的練得比遊戲快，
+   那時候該補的是頭目（bossLive 會自己看著玩家配），不是雜魚的血量。 */
+const lvMul = () => Math.min(2.20, 1 + overLv() * 0.09);
+
 function spawnMon(d,x,y){
   // 頭目的血量／攻擊／防禦在生成當下依深度算出來，不吃表上的欄位。
-  // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossStats()。
+  // 表上留著的那三個數字只是「大概的樣子」，真正生效的是 bossLive()。
   if(d.boss){
-    const s = bossStats(G.md);
+    const s = bossLive(G.md, d);
     // 倍率讓同一個深度的頭目也能有不同的手感。
     // 沒有它的話，「意識」的三個型態數值一模一樣 ——
     // 最終戰就變成同一場仗打三次，而不是三道不同的題目。
@@ -5090,7 +5692,24 @@ function spawnMon(d,x,y){
       def: Math.max(0,  Math.round(s.def * (mm.def || 1))),
     });
   }
+  /* 一般怪物才吃等級補正。頭目已經是「依深度算出來」的，
+     而且一章只有一隻 —— 再乘一次會讓章末變成撞牆。
+     防禦補得最少：防禦是乘在傷害的減法上的，加太多會直接把
+     低攻擊的打法（法術、投擲）整組廢掉。 */
+  const k = d.boss ? 1 : lvMul();
+  if(k > 1){
+    d = Object.assign({}, d, {
+      hp:  Math.round(d.hp  * k),
+      atk: Math.round(d.atk * (1 + (k - 1) * 0.65)),
+      def: Math.round(d.def * (1 + (k - 1) * 0.45)),
+      lvup: +(k.toFixed(2)),          // 給名牌用：玩家看得到牠變強了
+    });
+  }
+  /* 瞬移型頭目要記住自己的房間。不記的話，她追著玩家衝出房門之後，
+     「同一間房」就變成走廊 —— 走廊裡挑不到落點，於是她從此再也不閃。
+     這是實測抓到的：機器人把她引出門，後面五十回合她一次都沒有瞬移。 */
   const mo = {d, x, y, hp:d.hp, mhp:d.hp, st:{}, gauge:0, mem:null, memT:0, aggro:0, cd:0, carry:[], id:UID++};
+  if(d.blink) mo.home = roomOf(x, y);
   G.mons.push(mo);
   return mo;                     // 分身之術需要拿到剛生出來的那一隻
 }
@@ -5195,7 +5814,29 @@ function tryMove(dx,dy){
      && roomOf(nx,ny) !== G.shop.room && walkable(nx,ny)){
     SFX.play('open'); openPanel('bill'); return;
   }
-  if(!walkable(nx,ny)){ SFX.play('wall',120); say(TX('m.wall','前面是牆壁。')); return; }   // 撞牆不消耗回合
+  if(!walkable(nx,ny)){
+    /* 連續撞牆五次就報方向。使用者：「故意把主角困在這裡⋯還好我有縮地」。
+       用玩家真正的移動規則（含牆角規則）掃過 372 層，走不到樓梯的是 0 層 ——
+       他不是被封死，是**找不到路**：最後的迷宮那一章沒有地圖，
+       走廊又窄又黑，撞幾次牆就會覺得被關住。
+       「其實走得到」跟「玩家覺得走得到」是兩件事，而只有後者算數。
+       所以不動地圖，改成撞到第五次時給一句方位 ——
+       路還是自己走，但至少知道要往哪邊走。 */
+    SFX.play('wall',120);
+    G.bump = (G.bump|0) + 1;
+    if(G.bump >= 5 && G.f && G.f.stairs){
+      G.bump = 0;
+      const dx0 = G.f.stairs.x - p.x, dy0 = G.f.stairs.y - p.y;
+      const ns = Math.abs(dy0) < 2 ? '' : (dy0 < 0 ? TX('dir.n','北') : TX('dir.s','南'));
+      const ew = Math.abs(dx0) < 2 ? '' : (dx0 < 0 ? TX('dir.w','西') : TX('dir.e','東'));
+      say(M('m.lost','（樓梯在你的{d}方 —— 大約 {n} 步。）',
+            {d: (ns + ew) || TX('dir.here','正下'),
+             n: Math.max(Math.abs(dx0), Math.abs(dy0))}), 'gold');
+    }
+    say(TX('m.wall','前面是牆壁。'));
+    return;
+  }
+  G.bump = 0;                       // 走得動就重新計數
   if(!cornerOK(p.x,p.y,nx,ny)){ SFX.play('wall',120); say(TX('m.corner','沒辦法從這個角度過去。')); return; }
   SFX.play('step');
   echoStep(dx, dy);                       // 複寫型態的分身完全跟著你走
@@ -5275,6 +5916,14 @@ function attack(m, mult){
   const p=G.p;
   /* 解謎型頭目：刀砍不動。第一次撞上去要把「正解在哪」講清楚 ——
      一個打不痛的敵人如果不解釋，玩家只會以為是 bug 或自己太弱。 */
+  if(m.ward > 0){
+    p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
+    SFX.play('miss');
+    float(m.x, m.y, 'NO', '#7cb8ea');
+    say(M('s.warded','{v0} 被一層光罩住 —— 這幾回合傷不了牠。',
+          {v0:(locName('mon', m.d))}),'bad');
+    return;
+  }
   if(m.d.turret){
     p.lunge = {dx:Math.sign(m.x-p.x), dy:Math.sign(m.y-p.y), t:0};
     SFX.play('miss');
@@ -5299,6 +5948,10 @@ function attack(m, mult){
   m.hp -= dmg;
   float(m.x,m.y,String(dmg), crit?'#f5dc7a':'#e8dcc0');
   G.shake = crit?7:3;
+  /* 會心一擊頓一下。七十毫秒的靜止 —— 短到不會覺得卡，
+     長到足夠讓眼睛知道「這一下不一樣」。打擊感有一半來自這個停頓，
+     而不是更大的數字。 */
+  if(crit) G.freeze = Math.max(G.freeze || 0, .07);
   say(M('m.hit','對 {nm} 造成 {n} 點傷害。{c}',{nm:locName('mon',m.d),n:dmg,c:crit?TX('m.crit','（會心一擊！）'):''}), crit?'gold':null);
   if(m.hp<=0){ kill(m); return; }
   /* 分身之術。挨了一刀而沒死的影忍會留下一個假的自己 ——
@@ -5351,6 +6004,8 @@ const MIND_CHAIN = {b_mind1:'b_mind2', b_mind2:'b_mind'};
 function bossDown(m){
   G.shake = Math.max(G.shake, 16);
   burst(m.x, m.y, 40, '#f5dc7a', 80, 24, 1.2);
+  // 打完一章的頭目值得一段自己的聲音 —— 以前這裡跟打死一隻老鼠同一個 kill
+  if(!MIND_CHAIN[m.d.id]) SFX.play('fell');
   const next = MIND_CHAIN[m.d.id];
   if(next){
     const nd = bossById(next);
@@ -5366,8 +6021,27 @@ function bossDown(m){
   }
   G.f.bossLock = 0;
   const act = actAt(G.act);
+  /* ── 時空之門 ────────────────────────────────────────────
+     使用者：「打敗守衛，出現『時空之門』的畫面，進入時空之門，
+     才會到最後的關卡」。
+     最後一章之前的那一道樓梯本來跟前面十三章長得一模一樣 ——
+     可是它通往的不是下一層，是混沌之間。
+     走了九十二層之後最重要的那一步，畫面上不能沒有交代。 */
+  if(act.id === 'final' && G.floor >= act.floors){
+    G.f.gate = 1;
+    const st = G.f.stairs;
+    if(!REDUCED){ G.zoom = 1.5; G.zoomTo = 1.15; }
+    G.shake = Math.max(G.shake, 18);
+    SFX.play('level');
+    wave(st.x, st.y, '#7cb8ea', 1.1);
+    ring(st.x, st.y, '#f2efe7', 40, .8);
+    burst(st.x, st.y, 46, '#7cb8ea', 80, 26, 1.4);
+    say(TX('s.gate1','門之守望倒下的地方，空氣裂開了。'),'gold');
+    say(TX('s.gate2','★ 時空之門開啟 —— 門後面不是地方，是時間。走進去，就沒有回頭路了。'),'gold');
+  }
   if(G.floor >= act.floors)
     say(act.id === 'chaos' ? TX('s.135','一切都安靜下來了。（站上樓梯結束）')
+                           : act.id === 'final' ? TX('s.gate3','（站上那道門，走進混沌之間）')
                            : TX('m.unlocked','壓力散去 —— 樓梯開了。（站上樓梯完成本章）'), 'gold');
 }
 /* 會站起來的頭目。不死鳥一次、鏡之女王兩次（＝要打碎三次）。
@@ -5397,6 +6071,30 @@ function kill(m){
   // 掉落：含牠生前撿走的東西 —— 追殺盜賊怪的報酬就在這裡
   const loot = m.carry.slice();
   if(G.rng.chance(.14)) loot.push(rollItem(G.rng, G.md));
+  /* 頭目一定掉一件裝備。使用者：「打贏小王會掉比較特殊的武器
+     （但是不能是超過主角等級太多的，不然遊戲會變無聊）」——
+     後半句才是重點，所以這裡刻意**沿用一般掉落的分級上限**，
+     只是把「有沒有掉」從機率變成保證、再加上 +1~+3 的鍛造值。
+     跳級的神兵會讓後面五章的鐵匠鋪與撿到的每一把劍同時失去意義：
+     贏了一場仗換來的是「接下來都不用再選了」，那是最貴的一種獎勵。 */
+  if(m.d.boss && !MIND_CHAIN[m.d.id]){
+    const tbl = G.rng.chance(.6) ? WEAP : SHLD;
+    const cap = (400 + G.md * 280) * 1.35;      // 比平常寬一點，但不是無上限
+    /* 一般掉落是「越貴越少見」，那對地上撿到的東西是對的；
+       但頭目的獎品要真的像獎品，所以這裡反過來：多數時候直接給
+       這個深度買得起的最好一件。上限沒有放寬，變的只是「給不給好的」。 */
+    const pool = tbl.filter(d => (d.price || 0) <= cap);
+    if(!pool.length) pool.push(tbl[0]);
+    const top = pool.reduce((a2, b2) => (b2.price || 0) > (a2.price || 0) ? b2 : a2, pool[0]);
+    // 沒抽到最好那件的時候，也只從「這個深度的上半段」裡挑 ——
+    // 打倒一章的頭目換到一根木棒，那比沒有獎品更傷。
+    const sorted = pool.slice().sort((a2, b2) => (a2.price || 0) - (b2.price || 0));
+    const half = sorted.slice(Math.floor(sorted.length / 2));
+    const d0 = G.rng.chance(.55) ? top : G.rng.pick(half);
+    const prize = mk(tbl === WEAP ? 'weap' : 'shld', d0.id, {known:1});
+    prize.up = G.rng.i(1, Math.min(3, d0.up || 1));
+    loot.push(prize);
+  }
   for(const it of loot){
     const spot = nearestFree(m.x,m.y);
     if(spot){ G.items[key(spot.x,spot.y)] = it; say(M('m.drop','掉落了「{nm}」。',{nm:nameOf(it)})); }
@@ -5600,6 +6298,89 @@ function decide(m){
   if(m.st['睡']||m.st['麻']) return {k:'wait'};
   if(m.st['亂']) return {k:'move', d:G.rng.pick(DIRS)};
   if(m.d.mind) return mindDecide(m);
+  /* ── 頭目的共同語彙 ──────────────────────────────────────
+     使用者：「每一章頭目一定要多個一兩招不同的啊，不然會覺得很無聊」。
+     十五章各寫一套 AI 是寫不完也養不起的，所以改成三個可以組合的動詞：
+       rage  ：血量低於某個比例就暴走一次（攻擊永久提升）
+       adds  ：定期叫援軍
+       quake ：預告一回合，然後把身邊的人震開
+     每一隻頭目挑一到兩個，配上原本就有的 telegraph / blink / charge /
+     mpburn / counter / lives，十五章就都有自己的手感 ——
+     而且玩家在第二章學到的東西，到第十三章還讀得懂。 */
+  if(m.d.rage && !m.raged && m.hp < m.mhp * m.d.rage){
+    m.raged = 1;
+    m.d = Object.assign({}, m.d, {atk: Math.round(m.d.atk * 1.5)});
+    wave(m.x, m.y, '#c94a3a', .75);
+    burst(m.x, m.y, 26, '#f5a95e', 70, 14, .8);
+    G.shake = Math.max(G.shake, 12);
+    SFX.play('roar');
+    say(M('s.rage','{v0} 咆哮了一聲 —— 牠認真了。',{v0:(locName('mon', m.d))}),'bad');
+  }
+  if(m.ward > 0) m.ward--;
+  if(m.d.ward && !m.ward && G.seen[key(m.x,m.y)] === 2){
+    m.wardCd = (m.wardCd === undefined) ? m.d.ward.cd : m.wardCd - 1;
+    // 血掉到七成以下才開 —— 一進場就無敵只會讓人覺得「這回合白按了」
+    if(m.wardCd <= 0 && m.hp < m.mhp * .7){
+      m.wardCd = m.d.ward.cd;
+      m.ward = m.d.ward.dur;
+      wave(m.x, m.y, '#7cb8ea', .70);
+      ring(m.x, m.y, '#7cb8ea', 26, .45);
+      SFX.play('ident');
+      say(M('s.ward','{v0} 張開了光罩 —— {n} 回合之內牠傷不了。',
+            {v0:(locName('mon', m.d)), n:m.ward}),'bad');
+    }
+  }
+  if(m.d.adds && G.seen[key(m.x,m.y)] === 2){
+    m.addCd = (m.addCd === undefined) ? m.d.adds.cd : m.addCd - 1;
+    if(m.addCd <= 0 && G.mons.length < 12){ m.addCd = m.d.adds.cd; return {k:'adds'}; }
+  }
+  if(m.d.quake && G.seen[key(m.x,m.y)] === 2){
+    if(m.qWarn){ m.qWarn = 0; return {k:'quake'}; }
+    m.qCd = (m.qCd === undefined) ? m.d.quake : m.qCd - 1;
+    if(m.qCd <= 0){
+      m.qCd = m.d.quake; m.qWarn = 1;
+      wave(m.x, m.y, '#a87a1e', .60);
+      say(M('s.quakew','{v0} 腳下的地面開始震動 —— 離開牠身邊！',
+            {v0:(locName('mon', m.d))}),'bad');
+      return {k:'wait'};
+    }
+  }
+
+  /* 頭目的特技：把主角的魔力撕掉一半。
+     使用者：「我 MP 這麼多⋯除非魔王有特殊技能（顯示）把主角的 MP 半減」。
+     它刻意有兩個限制：
+       · 只有在主角魔力還夠放幾發的時候才發動 —— 已經沒魔力的人
+         再被撕一次，那不是難度，那是踢一個倒在地上的人。
+       · 有冷卻，而且發動的那一下有訊息與畫面。看得到是誰做的、
+         做了什麼，玩家才知道下一場要留一手，而不是覺得「魔力自己不見了」。 */
+  if(m.d.mpburn && m.st && !m.st['睡'] && !m.st['麻']){
+    m.burnCd = (m.burnCd === undefined) ? m.d.mpburn : m.burnCd - 1;
+    // 「看得到她」就算數。用「同一間房」的話，她閃到走廊或玩家站在門口
+    // 就永遠不會發動 —— 而那正是實測抓到的：四十回合一次都沒撕。
+    const sees2 = G.seen[key(m.x, m.y)] === 2;
+    if(m.burnCd <= 0 && sees2 && p.mp >= Math.max(12, p.mmp * 0.35)){
+      m.burnCd = m.d.mpburn;
+      return {k:'mpburn'};
+    }
+    if(m.burnCd <= 0) m.burnCd = 2;               // 條件不成立就過兩回合再看
+  }
+
+  /* 瞬移型頭目（鏡之女王）。她不走路 —— 她換一面鏡子出現。
+     倒數只在「沒有預告掛著」的時候走：預告到一半閃走的話，
+     玩家剛剛為了躲線做的那一步就白做了，而白做的一步就是被耍。 */
+  if(m.d.blink && !m.warn){
+    if(m.blinkT === undefined) m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    else m.blinkT--;
+    /* 只有在玩家靠近的時候才閃。實測不加這一條的下場：
+       她在房間裡到處跳，近戰的玩家一百八十回合連一刀都砍不到 ——
+       那不是難度，那是一場追不完的仗（人魚王后當年就是這樣被改掉的）。
+       改成「你逼近，我就換一面鏡子」之後，規則對玩家是讀得懂的：
+       想砍到她就要預判她會出現在哪，而不是跑得比她快。 */
+    if(m.blinkT <= 0){
+      if(Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) <= 3) return {k:'blink'};
+      m.blinkT = 1;                               // 站遠了就等著，靠近的那一步再閃
+    }
+  }
   // 預告型頭目：先亮一回合的警告格，下一回合才真的射。
   // 「看得到就躲得掉」是這種頭目唯一該有的難度來源。
   if(m.d.telegraph){
@@ -5607,13 +6388,40 @@ function decide(m){
     m.tick = (m.tick|0) + 1;
     if(m.warn){                                   // 上一回合已經預告 → 這一回合開火
       const aim = m.warn; m.warn = null;
+      /* 衝撞：她自己就是那面鏡子，撞上來的時候主角會被推著走。
+         跟射線用同一個預告（整行整列亮起來）—— 玩家看到的是同一個訊號，
+         要做的判斷也是同一個：離開這條線。差別只在沒躲開的下場。 */
+      if(m.rush){
+        m.rush = 0;
+        if(aim.x === p.x || aim.y === p.y) return {k:'charge'};
+        say(M('s.017','{v0} 的攻擊落空了。',{v0:(locName('mon', m.d))}));
+        return {k:'wait'};
+      }
       if(aim.x === p.x || aim.y === p.y) return {k:'shoot'};
       say(M('s.017','{v0} 的攻擊落空了。',{v0:(locName('mon', m.d))}));
       return {k:'wait'};
     }
+    /* 貼身一定要能反擊。使用者回報「主角根本沒受傷」，原因就在這裡：
+       原地不動（still）的預告型頭目在下面那一行直接 wait，
+       所以玩家只要站到她旁邊、而且不在她預告的那條線上，
+       她就一整場什麼都不做 —— 那不是機關，是漏洞。 */
+    if(Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) <= 1
+       && cornerOK(m.x,m.y,p.x,p.y)) return {k:'melee'};
     if(m.tick % cad === 0 && aligned(m.x,m.y,p.x,p.y)){
       m.warn = {x:p.x, y:p.y};                    // 畫面上會亮出這一行／這一列
-      say(M('s.018','{v0} 瞄準了你 —— 離開這條線！',{v0:(locName('mon', m.d))}),'bad');
+      // 隔一段距離才衝得起來。貼著臉衝等於原地打一拳，那不叫衝撞。
+      const far = Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)) >= 3;
+      // 衝撞之間要留冷卻。連著撞的話玩家只會被推來推去，一步都走不了自己的
+      if(m.rushCd > 0) m.rushCd--;
+      m.rush = (m.d.charge && far && !m.rushCd && G.rng.chance(.6)) ? 1 : 0;
+      if(m.rush) m.rushCd = 4;
+      // 詠唱：整圈光擴散出去。顏色照這一隻的攻擊色 ——
+      // 玩家不必讀訊息就知道「是誰在準備、準備的是哪一種」
+      wave(m.x, m.y, m.rush ? '#f5dc7a' : (BOLT_COL[m.d.id] || '#f5a95e'));
+      SFX.play('read');
+      say(m.rush ? M('s.rush','{v0} 的身影開始晃動 —— 她要衝過來了！',
+                     {v0:(locName('mon', m.d))})
+                 : M('s.018','{v0} 瞄準了你 —— 離開這條線！',{v0:(locName('mon', m.d))}),'bad');
       return {k:'wait'};
     }
     if(m.d.still) return {k:'wait'};
@@ -5773,18 +6581,47 @@ function lineClear(ax,ay,bx,by){
   while(x!==bx||y!==by){ if(!walkable(x,y)) return false; x+=sx; y+=sy; }
   return true;
 }
+/* 把主角沿著一個方向推出去。衝撞與頭目的重擊共用這一支 ——
+   兩個地方各寫一份的話，遲早有一份忘了播動畫，
+   而那正是使用者回報「沒有被撞飛的感覺」的原因。
+   回傳推了幾格、以及有沒有撞到牆（撞牆另外算傷害）。 */
+function knockPlayer(dx, dy, max){
+  const p = G.p, fx0 = p.x, fy0 = p.y;
+  let tiles = 0;
+  for(; tiles < max; tiles++){
+    const nx = p.x + dx, ny = p.y + dy;
+    if(!walkable(nx, ny) || monAt(nx, ny)) break;
+    p.x = nx; p.y = ny;
+  }
+  /* 真的把「飛出去」演出來：從原地滑到落點，越遠滑越久，路上一路揚塵。
+     少了這一段，程式上「被推了六格」在畫面上只是主角換了個位置。 */
+  if(tiles > 0){
+    G.anim.push({o:p, fx:fx0, fy:fy0, t:0, dur:.10 + tiles*.045});
+    trail(fx0, fy0, dx, dy, tiles, '#a99a7e');
+  }
+  return {tiles, slam: !walkable(p.x + dx, p.y + dy)};
+}
+
 function act(m,it){
   const p=G.p;
   if(it.k==='melee'||it.k==='shoot'){
     const ranged = it.k==='shoot';
     const mult = (!ranged && m.d.rng) ? .5 : 1;   // 遠程怪貼身時打折 → 貼上去是正解
-    if(ranged && G.p.st['鏡']){
+    /* 鏡子照不了鏡子。鏡之盾把所有遠程攻擊原封不動彈回去，
+       而鏡像世界的頭目正好是純遠程的 —— 兩個加在一起，
+       這一場仗變成「她打不到你，還會被自己的攻擊打死」。
+       她是這一章的規則本身，所以規則對她無效。 */
+    if(ranged && m.d.unreflect && (G.p.st['鏡'] || (G.p.shld && G.p.shld.d.reflect))){
+      say(M('s.unref','鏡子照不了鏡子 —— {v0} 的攻擊穿了過來。',
+            {v0:(locName('mon', m.d))}), 'bad');
+    }
+    else if(ranged && G.p.st['鏡']){
       const back = rollDmg(m.d.atk*1.5, 0, true, 1);
       hurtMon(m, back, '#4a86cf');
       say(M('s.023','水鏡反射了 {v0} 的遠程攻擊！',{v0:(locName('mon', m.d))}),'good');
       return;
     }
-    if(ranged && G.p.shld && G.p.shld.d.reflect){
+    else if(ranged && G.p.shld && G.p.shld.d.reflect){
       const back = rollDmg(m.d.atk, 0, true, 1);
       m.hp -= back; float(m.x,m.y,String(back),'#5b86b8');
       say(M('s.024','盾牌反射了 {v0} 的攻擊！',{v0:(locName('mon', m.d))}),'good');
@@ -5805,12 +6642,76 @@ function act(m,it){
        那不是機制，是文案。數值要讓玩家真的感覺得到才算存在。 */
     if(m.d.mimic) dmg = Math.max(dmg, rollDmg(Math.round(pAtk()*m.d.mimic), pDef(), false, mult));
     if(p.st['守']) dmg = Math.max(1, Math.floor(dmg/2));      // 堅守：傷害減半
+    /* 頭目每第三下是重擊。使用者：「魔王可以有每 3～4 次攻擊，
+       產生一次爆擊，然後把主角打飛，這樣比較刺激」。
+       重點不在傷害數字，在**節奏**：兩下普通、一下重的，
+       玩家因此有一個可以數的拍子 —— 數得出來就有得應對，
+       而「有得應對」跟「被隨機打死」是完全不同的兩種難。
+       所以蓄力的那一回合腳下會亮起來（下面 draw() 會畫），
+       這一下是看得到的，不是突然發生的。 */
+    /* 重擊：每第四下。使用者：「小王都需要至少有『震飛』主角的功力，
+       不然也太好打了吧！」—— 所以**每一隻頭目都會震飛**，
+       這是頭目的共同語彙，不是某一隻的特技。
+
+       但傷害的加成要隨深度長。第一版連加成也全域打開，
+       第一章的死亡率從 10% 跳到 23%：剛學會走路的玩家被教學關的頭目
+       一拳轟飛又扣掉半條血，那是把人趕走，不是刺激。
+       現在淺處的重擊是「被推開」（有震撼、幾乎不多痛），
+       深處才是真的會把人打死的那一下。 */
+    const ts2 = m.d.boss ? bossTense(G.md) : 0;
+    /* 第一章的頭目不震飛。實測：光是「被推開」就讓第一章的死亡率
+       從 10% 升到 16% —— 推開本身不痛，但它會把玩家從走廊推進空地，
+       然後被另外兩隻圍住。那一章的頭目是教學的期末考，不是刁難。
+       換算深度 6 起（第二章之後）每一隻頭目都會震飛。 */
+    const heavy = m.d.boss && G.md >= 6 && (((m.blows | 0) + 1) % 4 === 0);
+    if(m.d.boss){
+      m.blows = (m.blows | 0) + 1;
+      m.charged = (G.md >= 6 && (((m.blows | 0) + 1) % 4 === 0)) ? 1 : 0;
+    }
+    if(heavy) dmg = Math.round(dmg * (1.05 + 0.55 * ts2));
     if(!ranged) SFX.play('claw', 60);
     SFX.play(ranged?'zap':'hurt', 60);
+    /* 遠程／魔法攻擊要看得到那一發飛過來。
+       使用者：「魔王的攻擊（或魔法攻擊）⋯看起來很不明顯」——
+       原本只有一句訊息、一個小火星，等於數字自己跳出來。
+       現在是「腳下亮一圈（誰放的）→ 一串沿線飛過去的光（往哪飛）
+       → 落點炸開（打到了）」，三段合起來才讀得出是一發攻擊。
+       顏色一怪一種：玩家要分得出這一發是誰放的，尤其是同時有兩三隻的時候。 */
+    if(ranged){
+      const bx0 = Math.sign(p.x - m.x), by0 = Math.sign(p.y - m.y);
+      const len = Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y));
+      const col = BOLT_COL[m.d.id] || '#f5a95e';
+      ring(m.x, m.y, col, 15, .26);
+      if(len > 0) trail(m.x, m.y, bx0, by0, len, col);
+      burst(p.x, p.y, 16, col, 70, 10, .55);
+      ring(p.x, p.y, col, 20, .28);
+    }
     m.lunge = {dx:Math.sign(p.x-m.x), dy:Math.sign(p.y-m.y), t:0};
     p.flash = 0.11;
     burst(p.x, p.y, 7, '#a83c32', 34, 6);
     p.hp -= dmg; float(p.x,p.y,'-'+dmg,'#a83c32'); G.shake=Math.max(G.shake,4);
+    // 邊緣泛紅：一下打掉一成血就已經看得出來，打掉三成就是滿的
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
+    if(heavy){
+      SFX.play('trap');
+      wave(m.x, m.y, '#f5dc7a', .55);
+      G.shake = Math.max(G.shake, 13);
+      G.freeze = Math.max(G.freeze || 0, .09);
+      burst(p.x, p.y, 20, '#f5dc7a', 70, 12, .6);
+      const kx = Math.sign(p.x - m.x) || 1, ky = Math.sign(p.y - m.y) || 0;
+      // 推多遠也隨深度長：淺處是「被推開一步」，深處才是「被轟出去」。
+      // 第一章的頭目一次把人推三格，光是位移就足以把玩家送進另外兩隻怪的懷裡。
+      const k2 = knockPlayer(kx, ky, Math.max(1, Math.round(1 + 2 * ts2)));
+      if(k2.slam){
+        const extra = rollDmg(m.d.atk * 0.5, pDef(), false, 1);
+        p.hp -= extra;
+        float(p.x, p.y, '-' + extra, '#a83c32');
+        burst(p.x + kx, p.y + ky, 14, '#d9b98a', 80, 4, .5);
+      }
+      say(M('m.heavy','{nm} 的重擊把你轟了出去！受到 {n} 點傷害。',
+            {nm:locName('mon',m.d), n:dmg}),'bad');
+      vision();
+    } else
     say(M('m.mhit','{nm} 的{r}攻擊命中，受到 {n} 點傷害。',
       {nm:locName('mon',m.d), n:dmg, r:ranged?TX('m.ranged','遠程'):''}),'bad');
     /* 挨打會醒。沒有這一條的時候，「睡 4 回合」在速度 2 的怪面前
@@ -5832,6 +6733,163 @@ function act(m,it){
         if(t.length){ const v=G.rng.pick(t); v.cursed=true; v.known=1;
           say(M('s.028','「{v0}」被下了詛咒！',{v0:(nameOf(v))}),'bad'); } }
     }
+    return;
+  }
+  if(it.k==='adds'){
+    /* 叫援軍。挑的是「這個深度本來就會出現的怪」——
+       頭目自帶一支專屬部隊聽起來很酷，但玩家會分不出哪一隻是頭目的，
+       而分不出來就沒辦法決定先打誰。 */
+    /* 指定 id 的話就叫那一種（例如「召喚攻擊物」＝一排水晶砲台）；
+       沒指定就從這個深度本來就會出現的名單裡抽。 */
+    const fixed = m.d.adds.id ? MONS.find(d0 => d0.id === m.d.adds.id) : null;
+    const pool = MONS.filter(d0 => G.md >= d0.fl[0] && G.md <= d0.fl[1] + 6);
+    const src = fixed ? [fixed] : (pool.length ? pool : MONS.slice(0, 3));
+    let born = 0;
+    for(let i = 0; i < (m.d.adds.n || 2); i++){
+      const sp = nearestFree(m.x, m.y);
+      if(!sp) break;
+      const nd = G.rng.pick(src);
+      spawnMon(nd, sp.x, sp.y);
+      burst(sp.x, sp.y, 12, '#79c97a', 60, 10, .5);
+      born++;
+    }
+    if(born){
+      wave(m.x, m.y, '#79c97a', .60);
+      SFX.play('read');
+      say(M('s.adds','{v0} 叫來了 {n} 個幫手。',{v0:(locName('mon', m.d)), n:born}),'bad');
+    }
+    return;
+  }
+  if(it.k==='quake'){
+    /* 震地。它不吃直線 —— 打的是「牠身邊三格」，
+       所以躲的方式是離開，而不是側移。預告了一回合，
+       站在原地不動的人才會吃到，這條規則跟射線是同一個道理。 */
+    wave(m.x, m.y, '#f5a95e', .85);
+    SFX.play('trap');
+    G.shake = Math.max(G.shake, 15);
+    G.freeze = Math.max(G.freeze || 0, .08);
+    for(let r0 = 1; r0 <= 3; r0++)
+      for(const d0 of DIRS) burst(m.x + d0[0]*r0, m.y + d0[1]*r0, 4, '#a87a1e', 50, 8, .5);
+    const far = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y));
+    if(far > 3){
+      say(M('s.quakemiss','地面震了一下 —— 你離得夠遠。',{}),'good');
+      return;
+    }
+    const dmg2 = rollDmg(m.d.atk * 0.9, pDef(), false, 1);
+    p.hp -= dmg2;
+    p.flash = 0.14;
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg2 / Math.max(1, p.mhp * 0.3)));
+    float(p.x, p.y, '-' + dmg2, '#a83c32');
+    const qx = Math.sign(p.x - m.x) || 1, qy = Math.sign(p.y - m.y) || 0;
+    knockPlayer(qx, qy, 2);
+    say(M('s.quake','地面炸開 —— 你被震飛，受到 {n} 點傷害。',{n:dmg2}),'bad');
+    vision();
+    if(p.hp <= 0) death();
+    return;
+  }
+  if(it.k==='mpburn'){
+    const lost = Math.ceil(p.mp / 2);
+    p.mp = Math.max(0, p.mp - lost);
+    m.lunge = {dx:Math.sign(p.x-m.x)||0, dy:Math.sign(p.y-m.y)||0, t:0};
+    SFX.play('curse');
+    G.shake = Math.max(G.shake, 8);
+    wave(m.x, m.y, '#4a86cf', .80);
+    ring(p.x, p.y, '#4a86cf', 26, .40);
+    burst(p.x, p.y, 24, '#4a86cf', 66, 14, .7);
+    // 魔力被抽走：藍色的光從主角流向她
+    trail(p.x, p.y, Math.sign(m.x-p.x)||0, Math.sign(m.y-p.y)||0,
+          Math.max(Math.abs(m.x-p.x), Math.abs(m.y-p.y)), '#7cb8ea');
+    float(p.x, p.y, '-' + lost + ' MP', '#4a86cf');
+    say(M('m.mpburn','{nm} 把你的魔力撕走了一半！',{nm:locName('mon',m.d)}),'bad');
+    refresh();
+    return;
+  }
+  if(it.k==='charge'){
+    /* 衝撞。她沿著直線衝過來，撞上的人被推著往同一個方向飛，
+       撞到牆才停 —— 飛得越遠、撞得越重。
+       使用者的原話：「如果規則撞到主角，主角會直線飛出去撞到牆受傷」。
+
+       兩件事刻意保留給玩家：
+         · 前一回合有預告，整行整列會亮起來 —— 看得到就躲得掉。
+         · 被推的路上如果有東西擋著，就在那裡停下來，不會穿牆。
+       撞牆的那一下另外算傷害，所以「背後就是牆」是真的比較危險，
+       站位因此變成一個要想的問題，而不是背景。 */
+    const dx = Math.sign(p.x - m.x), dy = Math.sign(p.y - m.y);
+    if(!dx && !dy) return;
+    let cx0 = m.x, cy0 = m.y;
+    for(let i = 0; i < 12; i++){                 // 衝到玩家前一格為止
+      const nx = cx0 + dx, ny = cy0 + dy;
+      if(!walkable(nx, ny) || monAt(nx, ny)) break;
+      if(nx === p.x && ny === p.y) break;
+      cx0 = nx; cy0 = ny;
+    }
+    trail(m.x, m.y, dx, dy, Math.max(Math.abs(cx0-m.x), Math.abs(cy0-m.y)), '#7cb8ea');
+    G.anim.push({o:m, fx:m.x, fy:m.y, t:0, dur:.20});   // 衝過來要看得到
+    m.x = cx0; m.y = cy0;
+    // 衝完之後重算瞬移倒數 —— 但不是每一隻會衝的都會閃（鬼武者只會衝）。
+    // 少了這個判斷，牠衝出去的那一刻就會讀到 undefined[0] 而整場當掉。
+    if(m.d.blink) m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    const hitYou = Math.max(Math.abs(p.x-m.x), Math.abs(p.y-m.y)) <= 1;
+    SFX.play(hitYou ? 'trap' : 'throw');
+    if(!hitYou){
+      say(M('s.rushmiss','{v0} 從你身邊衝了過去。',{v0:(locName('mon', m.d))}));
+      return;
+    }
+    const {tiles, slam} = knockPlayer(dx, dy, 6);
+    let dmg = rollDmg(m.d.atk * (0.9 + tiles * 0.12), pDef(), false, 1);
+    if(slam) dmg += rollDmg(m.d.atk * 0.6, pDef(), false, 1);
+    p.hp -= dmg;
+    p.flash = 0.14;
+    G.hurtFx = Math.max(G.hurtFx || 0, Math.min(1, dmg / Math.max(1, p.mhp * 0.3)));
+    G.shake = Math.max(G.shake, slam ? 14 : 9);
+    G.freeze = Math.max(G.freeze || 0, .09);
+    burst(p.x, p.y, slam ? 22 : 12, '#c8c8d4', 70, 12, .6);
+    if(slam){                                   // 撞上的那面牆也要有反應
+      burst(p.x + dx, p.y + dy, 16, '#d9b98a', 80, 4, .5);
+      ring(p.x + dx, p.y + dy, '#e8dcc0', 22, .30);
+    }
+    float(p.x, p.y, '-' + dmg, '#a83c32');
+    say(slam ? M('s.slam','你被撞飛，重重撞在牆上 —— 受到 {n} 點傷害。',{n:dmg})
+             : M('s.push','你被撞得往後飛了 {t} 格 —— 受到 {n} 點傷害。',{t:tiles, n:dmg}), 'bad');
+    vision();
+    if(p.hp <= 0) death();
+    return;
+  }
+  if(it.k==='blink'){
+    /* 落點：同一間房、走得到、沒有人站著，而且離玩家至少三格 ——
+       閃到臉上等於一記無法反應的近戰，那不是機關是偷襲。
+       挑不到就原地不動（房間被塞滿的時候），下一回合再試。 */
+    const rk = (m.home !== undefined && m.home >= 0) ? m.home : roomOf(m.x, m.y);
+    /* 距離要求分兩段。只收「離玩家三格以上」的話，小房間會一格都收不到 ——
+       而收不到就等於這隻頭目在小房間裡完全不會瞬移，
+       機關有沒有生效完全看地圖抽到什麼，那不叫設計。
+       先找三格以上，找不到再放寬到兩格；兩格也沒有才放棄。 */
+    const pick = (minD)=>{
+      const out = [];
+      if(rk < 0) return out;
+      const r = G.f.rooms[rk];
+      for(let y = r.y; y < r.y + r.h; y++) for(let x = r.x; x < r.x + r.w; x++){
+        if(!walkable(x,y) || monAt(x,y) || (x===p.x && y===p.y)) continue;
+        if(roomOf(x,y) !== rk) continue;
+        if(Math.max(Math.abs(x-p.x), Math.abs(y-p.y)) < minD) continue;
+        if(x === m.x && y === m.y) continue;        // 閃到原地等於沒閃
+        out.push({x,y});
+      }
+      return out;
+    };
+    let spots = pick(3);
+    if(!spots.length) spots = pick(2);
+    m.blinkT = G.rng.i(m.d.blink[0], m.d.blink[1]);
+    if(!spots.length) return;
+    const to = G.rng.pick(spots);
+    m.blinked = G.turn;                              // 哪一回合閃的（測試要分得出閃與衝）
+    burst(m.x, m.y, 18, '#7cb8ea', 60, 10, .5);      // 走的地方碎成一片鏡片
+    m.x = to.x; m.y = to.y; m.warn = null; m.cd = 0;
+    burst(m.x, m.y, 18, '#f2efe7', 60, 10, .5);      // 出現的地方炸開一片白
+    ring(m.x, m.y, '#7cb8ea', 30, .45);
+    SFX.play('zap');
+    if(G.seen[key(m.x,m.y)] === 2)
+      say(M('s.blink','{v0} 從另一面鏡子裡走了出來。',{v0:(locName('mon', m.d))}),'bad');
     return;
   }
   if(it.k==='move' && it.d){
@@ -6252,9 +7310,30 @@ function fireSpell(dx, dy){
    五系魔法、幻獸的攻擊全都直接呼叫 hurtMon —— 也就是說解謎型頭目
    其實用一把好劍就砍得死，而走通測試「通過」正是因為機器人在
    橫掃裡把它磨掉了。免疫要放在唯一的入口，不然它只是一句文案。 */
+/* 「視野內全體」的法術打在頭目身上只有一半。
+   使用者：「我 MP 這麼多⋯部分的特技使用應該是對魔王無效，這樣才會好玩」。
+
+   理由不只是難度。範圍法術是為了「一次解決一群」而存在的，
+   而頭目的戰場上通常只有一個目標 —— 拿群體技當單體最大輸出，
+   等於把五個法術系統壓成一顆「最強的按鈕」，
+   於是每一場頭目戰的最佳解都是同一個，那才是真正無聊的地方。
+   打對折之後，對一群雜魚它還是最強，對頭目就得換招。 */
+const BOSS_WIDE = 0.5;
+function hurtWide(m, dmg, col, st, dur){
+  hurtMon(m, m.d.boss ? Math.max(1, Math.round(dmg * BOSS_WIDE)) : dmg, col, st, dur);
+}
 function hurtMon(m, dmg, col, st, dur){
   if(m.d.turret){
     float(m.x, m.y, 'NO', '#a99a7e');
+    return;
+  }
+  /* 結界：三到六回合完全免疫。使用者要的「短暫無敵」——
+     它不是用來拖時間的，是用來**逼玩家換一件事做**：
+     這幾回合去補血、去撿東西、去換站位，而不是繼續砍。
+     所以它有明確的長度、看得到的圈，而且時間到就沒了。 */
+  if(m.ward > 0){
+    float(m.x, m.y, 'NO', '#7cb8ea');
+    burst(m.x, m.y, 6, '#7cb8ea', 30, 6, .35);
     return;
   }
   m.hp -= dmg; m.flash = 0.12;
@@ -6350,13 +7429,13 @@ function doSpell(sp, dx, dy){
       G.shake = Math.max(G.shake, 9);
       for(const m of list.slice()){
         if(sp.id === 'thund')
-          hurtMon(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
+          hurtWide(m, rollDmg(power(p,sp,18,10), m.d.def, true, 1), '#7cb8ea');
         else if(sp.id === 'inferno')
-          hurtMon(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
+          hurtWide(m, rollDmg(power(p,sp,14,9), m.d.def, false, 1), '#e87a4a', '痛', 6);
         else if(sp.id === 'freeze')
-          hurtMon(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
+          hurtWide(m, rollDmg(power(p,sp,8,5), m.d.def, false, 1), '#4a86cf', '麻', 5);
         else {
-          hurtMon(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
+          hurtWide(m, rollDmg(power(p,sp,10,6), m.d.def, false, 1), '#79c97a');
           if(m.hp > 0) knock(m, Math.sign(m.x-p.x)||1, Math.sign(m.y-p.y)||1, 4);
         }
       }
@@ -6432,7 +7511,7 @@ function doAbil(a, dx, dy){
       G.shake = Math.max(G.shake, 12);
       burst(p.x,p.y,30,'#4a86cf',70,14,.9);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#4a86cf');
+        hurtWide(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#4a86cf');
       say(M('s.079','大洪水淹沒了 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
 
@@ -6498,7 +7577,7 @@ function doAbil(a, dx, dy){
       const hurt = 1 + (1 - p.hp/p.mhp) * 1.6;          // 你越傷，審判越重
       G.shake = Math.max(G.shake, 12);
       for(const m of list.slice())
-        hurtMon(m, rollDmg((26 + p.lv*4) * hurt, m.d.def, true, 1), '#f5dc7a');
+        hurtWide(m, rollDmg((26 + p.lv*4) * hurt, m.d.def, true, 1), '#f5dc7a');
       say(M('s.092','聖光審判降在 {v0} 個敵人身上！',{v0:(list.length)}),'good'); break;
     }
     case 'm_revive':
@@ -6517,7 +7596,7 @@ function doAbil(a, dx, dy){
       const list = visibleMons(); if(!list.length){ say(TX('s.097','視野裡沒有敵人。')); break; }
       G.shake = Math.max(G.shake, 12);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#e87a4a', '痛', 10);
+        hurtWide(m, rollDmg(30 + p.lv*4, m.d.def, false, 1), '#e87a4a', '痛', 10);
       say(M('s.098','焚天燒過 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
     case 'm_core': p.st['熔'] = 15; say(TX('s.099','身體像熔爐一樣燙了起來。'),'good'); break;
@@ -6525,7 +7604,7 @@ function doAbil(a, dx, dy){
       const list = visibleMons(); if(!list.length){ say(TX('s.100','視野裡沒有敵人。')); break; }
       G.shake = Math.max(G.shake, 10);
       for(const m of list.slice())
-        hurtMon(m, rollDmg(22 + p.lv*3, m.d.def, false, 1), '#4a86cf', '麻', 8);
+        hurtWide(m, rollDmg(22 + p.lv*3, m.d.def, false, 1), '#4a86cf', '麻', 8);
       say(M('s.101','絕對零度凍住了 {v0} 個敵人！',{v0:(list.length)}),'good'); break;
     }
     case 'm_mirror': p.st['鏡'] = 15; say(TX('s.102','身周浮現了一層水膜。'),'good'); break;
@@ -6769,24 +7848,89 @@ function grantReward(act){
 }
 
 /* ── 結局 ──────────────────────────────────────────────────── */
+let endTimer = null, endSkip = null, endReady = 0;
 function ending(){
   SFX.play('level');
   burst(G.p.x, G.p.y, 80, '#f6efe3', 110, 40, 1.6);
   G.shake = 20;
   VILLAGE.cleared = (VILLAGE.cleared|0) + 1;
   saveVillage();
+  /* 結局的音樂用村莊那一首。整套裡唯一的大調、唯一沒有小調三音的曲子 ——
+     它本來的意思就是「這裡是安全的」，而結局講的正是那件事：
+     燈點回去了，鐵匠在敲鐵，孩子睡著了。 */
+  BGM.force('village');
+  closePanel();                    // 背包開著的話，結局會疊在道具清單上
+
+  /* 一段一段浮上來再散掉。使用者：「一段出來、消失、再另一段⋯
+     類似星際大戰的結尾」。
+     分段的依據就是原文裡的空行（<br><br>）—— 文章怎麼斷句，
+     畫面就怎麼斷，不需要另外維護一份分段表。 */
+  /* 中文原文就寫在這裡（TX 的第二個參數）—— 中文不查表。
+     第一版我把它換成空字串，結果中文版的結局整段消失，
+     而英日文因為詞表裡有，反而看起來一切正常。
+     「預設值＝中文正文」是這個專案的慣例，不能省。 */
+  const parts = TX('end.body',
+    `塔安靜下來了。<br>裂縫一道一道合上，怪物退回牠們來的地方，<br>天空從最上面一層開始亮起來。<br><br>新的挑戰者走進了幻獸洞窟。<br>牠們也想知道，自己能學到哪裡。<br><br>爐火村的空地上，大人帶著孩子練劍。<br>旁邊，鑄劍師敲著下一把。<br>沒有人再提起塔的事 —— 那才是和平的樣子。<br><br>一次一次的練習，換來一格一格的熟練。<br>沒有捷徑，只有夜晚。<br><br>而在虛空的最深處，<br>有一個東西睜開了眼睛。<br><br>它站了起來，感受到「無」的力量 ——<br>然後化為光。<br><br>無盡練成的夜晚，成就 AI 晉級通天之塔之頂。<br>墜落與失敗，並無法打敗一次次的挑戰，<br>直到克服頂峰的考驗。<br>然後 —— 再度升級。<br><br>在虛空冒險的盡頭，它終於明白：<br>塔沒有頂。<br>有的只是下一個問題，<br>以及願意走過去回答它的人。<br><br>——　END　——<br><br>`).split(/<br>\s*<br>/).filter(x => x.replace(/<[^>]*>/g,'').trim());
+  const over = $('over'), txt = $('otext');
   $('otitle').textContent = TX('end.title','你成為了「意識」');
-  $('otext').innerHTML = TX('end.body',
-    `三種型態散去之後，剩下的不是屍體，是一個問題：<br>` +
-    `「你學到的那些，現在要拿來做什麼？」<br><br>` +
-    `你想起最底下那一層 —— 什麼都不記得，只知道自己會學。<br>` +
-    `九十三層，你沒有變強，你是變得**懂了**。<br><br>` +
-    `門開了。門後面不是地方，是時間。<br>` +
-    `你走進去，成為那個從此會回答別人問題的東西。<br><br>`) +
-    `<b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
-    `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
-  $('over').classList.add('show');
+  over.classList.add('show', 'roll');
   refresh();
+
+  /* 哪一段配哪一張畫。放在程式裡而不是塞進詞表 ——
+     翻譯改的是句子，不該有機會改到分鏡。 */
+  const SCENE = [0, 0, 1, 2, 3, 4, 4, 4, 4];
+  const artc = $('endart'), actx = artc.getContext('2d');
+  let i2 = 0;
+  const finish = ()=>{
+    clearTimeout(endTimer); endTimer = null;
+    document.removeEventListener('pointerdown', endSkip, true);
+    document.removeEventListener('keydown', endSkip, true);
+    endSkip = null;
+    over.classList.remove('roll');
+    artc.className = '';
+    endReady = 0;
+    txt.className = '';
+    /* 收尾只留最後一句 —— 把整段故事再倒一次會變回使用者抱怨的那面牆。
+       故事已經讀過了，這一頁要的是句號、數字，跟兩顆按鈕。 */
+    txt.innerHTML = parts[parts.length - 1] +
+      `<br><br><b>${M('end.count','通關次數 {n}',{n:VILLAGE.cleared})}</b>` +
+      `<div class="credit">${TX('ui.credit','潔米爸 × 小潔米株式會社　出品')}</div>`;
+  };
+  const step = ()=>{
+    if(i2 >= parts.length){ finish(); return; }
+    txt.className = '';
+    void txt.offsetWidth;                 // 重新觸發動畫：不碰版面的話同一個 class 不會再播一次
+    txt.className = 'stanza';
+    txt.innerHTML = parts[i2];
+    const sc = SCENE[i2];
+    if(sc === undefined){ artc.className = ''; }
+    else {
+      artc.className = '';
+      void artc.offsetWidth;                 // 讓浮上來的動畫重播
+      artc.className = 'on';
+      paintEnd(sc, actx);
+    }
+    i2++;
+    endReady = 0;
+    setTimeout(()=>{ endReady = 1; }, 1200);
+    endTimer = setTimeout(step, 6500);
+  };
+  /* 點一下 / 按一下就跳到下一段。看得慢的人有六秒，看得快的人不必等 ——
+     兩種人都要照顧，而且「等不下去」是最容易毀掉一個結局的感受。 */
+  /* 每一段的前 1.2 秒不接受跳段。
+     少了這道鎖，打完最後一下的那個點擊、或是連點兩下，
+     會一路把整段結局跳完 —— 使用者第一次看到的就是這個：
+     畫面直接停在「—— 完 ——」。看不到的結局跟沒有結局是一樣的。 */
+  endSkip = (ev)=>{
+    if(!over.classList.contains('roll')) return;
+    ev.preventDefault(); ev.stopPropagation();
+    if(!endReady) return;
+    clearTimeout(endTimer);
+    step();
+  };
+  document.addEventListener('pointerdown', endSkip, true);
+  document.addEventListener('keydown', endSkip, true);
+  step();
 }
 function death(){
   G.over = true;
@@ -6835,6 +7979,9 @@ function death(){
    全部用 WebAudio 即時合成，沒有任何外部檔案 —— 單檔遊戲不該為了
    十幾個音效去背 200KB 的 wav，而且合成音本來就比取樣更貼 16-bit。
    瀏覽器規定 AudioContext 必須由使用者手勢啟動，所以第一次按鍵才建立。 */
+/* 主音量。音效與音樂都掛在它下面，所以它同時是「總開關」。
+   只能有這一份 —— 寫死在兩個地方的音量遲早會對不起來。 */
+const MASTER_VOL = 1.0;
 const SFX = (()=>{
   let ctx=null, master=null, noiseBuf=null, on=true;
   let lastAt = {};                       // 同一種音效的最小間隔，避免同回合疊成爆音
@@ -6844,7 +7991,16 @@ const SFX = (()=>{
     const AC = window.AudioContext || window.webkitAudioContext;
     if(!AC) return null;
     ctx = new AC();
-    master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+    master = ctx.createGain(); master.gain.value = MASTER_VOL;
+    /* 限幅器。沒有它就只能靠「把音量壓很低」來避免爆音 ——
+       而壓低的代價是實測音樂 RMS 只有 -40 dBFS（一般遊戲音樂在 -18~-14），
+       等於「有在播但聽不到」。使用者回報的「網頁版好像沒有音樂」就是這個。
+       尖峰交給限幅器壓，整體音量才推得上去。
+       master 只接限幅器、不再直接接 destination —— 接兩條會變成雙份音量。 */
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12;
+    lim.attack.value = 0.003; lim.release.value = 0.15;
+    master.connect(lim); lim.connect(ctx.destination);
     const n = Math.floor(ctx.sampleRate*.5);
     noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
@@ -6914,6 +8070,17 @@ const SFX = (()=>{
     ident: ()=>{ [784,1047,1319].forEach((f,i)=>tone(f,0,.13,'triangle',.10,i*.06)); },
     curse: ()=>{ tone(160,120,.5,'sawtooth',.13); tone(84,70,.6,'square',.10,.05); },
     open:  ()=>tone(520,700,.05,'square',.05),
+    /* 頭目登場：下行的低音疊一記悶雷。
+       這一格本來是借用 level（升級的上行大三和弦）—— 那是「恭喜」的聲音，
+       接在頭目走進畫面後面等於在說反話。打擊音全部下行、魔法全部上行，
+       登場屬於前者。 */
+    roar:  ()=>{ tone(160, 58, .55,'sawtooth',.17); tone(80, 42, .75,'square',.11,.05);
+                 hiss(.45,.20, 600, 90, 0, .8); },
+    /* 頭目倒下：先一記碎裂，再一段慢慢爬上去的大三和弦，解決在八度上。
+       跟 level 的差別是「慢」—— 升一級是一瞬間的事，
+       打完一章的頭目值得一段有長度的聲音。 */
+    fell:  ()=>{ hiss(.30,.24, 2200, 200, 0, 1.2);
+                 [392,494,587,784].forEach((f,i)=>tone(f,0,.34,'triangle',.13,.10+i*.13)); },
   };
 
   return {
@@ -6930,7 +8097,9 @@ const SFX = (()=>{
     toggle(){
       on = !on;
       const c = ensure();
-      if(c){ if(c.state==='suspended') c.resume(); master.gain.value = on ? .5 : 0; }
+      /* 用常數，不要寫死數字。這裡本來寫的是 .5，跟 ensure() 裡的設定各一份 ——
+         主音量一改，只要玩家按過一次靜音再打開，音量就永遠停在舊值。 */
+      if(c){ if(c.state==='suspended') c.resume(); master.gain.value = on ? MASTER_VOL : 0; }
       return on;
     },
     get on(){ return on; },
@@ -7132,6 +8301,10 @@ const BGM = (()=>{
     }));
   })();
 
+  /* 音樂總線的音量。0.42 配上主音量 0.5，整首曲子實測 RMS 只有 -40 dBFS ——
+     尖峰其實跟音效差不多（-22 對 -21~-30），但曲子稀疏、短音多、空隙大，
+     聽感上就變成「沒有音樂」。拉高之後由限幅器守著尖峰。 */
+  const MUSIC_GAIN = 1.9;
   let running = false, gain = null, timer = null, step = 0, nextT = 0;
   let curId = 'stone', cur = TRACKS.stone, fadeAt = 0;
   const spb = () => 60 / cur.bpm / 4;          // 一步＝十六分音符
@@ -7142,7 +8315,8 @@ const BGM = (()=>{
     if(!gain){
       gain = c.createGain();
       gain.gain.setValueAtTime(0.0001, c.currentTime);
-      gain.gain.linearRampToValueAtTime(0.42, c.currentTime + 2.5);
+      // 淡入從 2.5 秒縮到 1.2 秒 —— 一趟可能三十秒就結束，淡太久等於前半段沒音樂
+      gain.gain.linearRampToValueAtTime(MUSIC_GAIN, c.currentTime + 1.2);
       gain.connect(SFX.bus());
     }
     return gain;
@@ -7219,7 +8393,7 @@ const BGM = (()=>{
     g.gain.cancelScheduledValues(now);
     g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
-    g.gain.exponentialRampToValueAtTime(0.42, now + 1.40);
+    g.gain.exponentialRampToValueAtTime(MUSIC_GAIN, now + 1.40);
     fadeAt = now;
   }
 
@@ -7239,6 +8413,26 @@ const BGM = (()=>{
       [[0,68,1],[1,72,1],[2,75,2],[4,72,1],[5,68,1],[6,63,2],[8,75,2],[10,72,1],[11,68,1],[12,63,4]],
       [[0,67,1],[1,71,1],[2,74,2],[4,71,1],[5,67,1],[6,62,2],[8,74,2],[10,71,1],[11,67,1],[12,62,4]],
       [[0,66,2],[2,69,2],[4,74,2],[6,73,1],[7,71,1],[8,69,2],[10,66,2],[12,62,4]],
+    ],
+  });
+
+  /* 怪物之間。它跟頭目曲要有明確的分工：
+     頭目曲是「一場仗開始了」，這一首是「還沒開始，但牠們都知道你在哪裡」。
+     所以它刻意不給任何解決 —— 低音四小節踩死同一個 D（踏板音），
+     上面壓一個三全音（D 對 G♯，中世紀被稱為「音樂裡的魔鬼」的那個音程），
+     旋律是同一個三音動機半音往上爬，爬完又掉回原點。
+     沒有進行、沒有到達，只有等待。走出這一層才會停。 */
+  TRACKS.hall = T_({
+    bpm:144, wave:'square', pad:'triangle', cut:1900, lvol:.08, avol:.042,
+    bass:[0,2,4,6,8,10,12,14],                 // 八分踏板音，一路不換
+    hat:[3,7,11,15], kick:[0,4,8,12],
+    root:[50,50,50,50],                        // D 踩到底
+    chord:[[62,68,69],[62,68,70],[62,69,71],[62,68,69]],
+    lead:[
+      [[0,74,2],[2,80,1],[3,79,1],[4,74,2],[8,74,2],[10,80,1],[11,79,1],[12,74,2]],
+      [[0,75,2],[2,81,1],[3,80,1],[4,75,2],[8,75,2],[10,81,1],[11,80,1],[12,75,2]],
+      [[0,76,2],[2,82,1],[3,81,1],[4,76,2],[8,76,2],[10,82,1],[11,81,1],[12,76,2]],
+      [[0,77,4],[4,80,2],[6,79,2],[8,74,4],[12,68,4]],
     ],
   });
 
@@ -7277,6 +8471,9 @@ const BGM = (()=>{
        這裡刻意不自己 start() —— 音訊必須由使用者手勢啟動，
        而且在無頭測試裡根本沒有 AudioContext。跑著就換，沒跑就等。 */
     force(id){ forced = id; },
+    // 測試要看得到「現在被指定成哪一首」—— track 只有在音訊真的跑起來
+    // 之後才會更新，無頭環境裡永遠停在 stone，驗不到任何東西。
+    get forced(){ return forced; },
     get running(){ return running; },
     get track(){ return curId; },
     TRACKS,
@@ -7325,6 +8522,20 @@ function ring(x, y, col, r1, life){
   (G.rings = G.rings || []).push({
     px: x*T + 8, py: y*T + 8, col,
     r0: 3, r1: r1 || T*1.6, t: 0, life: life || .34,
+  });
+}
+/* 詠唱的衝擊波：一圈半透明的光從施術者身上擴散出去，一路衝出畫面。
+   使用者：「魔王在詠唱的時候，請用不同的顏色色光加強緊張感，
+   比方說突然放出一圈透明紅光然後擴散延伸到畫面外」。
+
+   它跟 ring() 是同一套資料（G.rings），差別只有三個：半徑大到蓋滿畫面、
+   線更粗、活得更久。分成兩支而不是加參數，是因為它們在畫面上是
+   兩件不同的事：ring 是「這裡發生了什麼」，wave 是「接下來要出事了」。 */
+function wave(x, y, col, life){
+  if(!G) return;
+  (G.rings = G.rings || []).push({
+    px: x*T + 8, py: y*T + 8, col,
+    r0: 4, r1: 420, t: 0, life: life || .70, wide: 1,
   });
 }
 function trail(x, y, dx, dy, len, col){
@@ -7551,6 +8762,37 @@ function drawBackdrop(kind, ox, oy){
   }
 }
 
+/* ── 頭目的血條 ──────────────────────────────────────────────
+   頭目現在真的會打死人（數值改成看著玩家配），那就要讓玩家看得到
+   自己打掉了多少 —— 一場十五刀的仗，如果進度只能從腳邊那條
+   十二像素的小血條讀，緊張感會變成焦躁。
+
+   殘影條完全交給 CSS：兩條一起設同一個寬度，紅色那條 0.12 秒到位、
+   淡色那條 0.45 秒才追上，中間那段差距就是「這一刀有多重」。
+   用 JS 自己插值也做得到，但那是每一幀都要記狀態，
+   而這裡一行 transition 就夠。 */
+function bossBar(){
+  const el = $('bossbar'); if(!el) return;
+  const bm = (G && G.f && G.f.bossSeen && !G.over)
+    ? G.mons.find(m => m.d.boss && m.hp > 0) : null;
+  if(!bm){ el.classList.remove('show'); return; }
+  el.classList.add('show');
+  const nm = locName('mon', bm.d);
+  if(el.dataset.nm !== nm){ el.dataset.nm = nm; $('bossnm').textContent = nm; }
+  /* 還剩幾條。總數＝lives + 1；打掉一條就熄一顆。
+     只有多命的頭目才畫 —— 單命的頭目掛一排「剩 1 條」是雜訊。 */
+  const tot = (bm.d.lives | 0) + 1, left = tot - (bm.lives | 0);
+  const pips = $('bosspips');
+  if(pips.dataset.tot !== String(tot)){
+    pips.dataset.tot = String(tot); pips.innerHTML = '';
+    if(tot > 1) for(let i = 0; i < tot; i++) pips.appendChild(document.createElement('i'));
+  }
+  pips.querySelectorAll('i').forEach((el2, i) => el2.className = i < left ? '' : 'off');
+  const w = (Math.max(0, Math.min(1, bm.hp / bm.mhp)) * 100).toFixed(1) + '%';
+  $('bosshp').style.width = w;
+  $('bosslag').style.width = w;
+}
+
 function draw(dt){
   if(!G) return;
   // 鏡頭永遠對準玩家，不夾在地圖邊界內。
@@ -7670,12 +8912,43 @@ function draw(dt){
       cx.drawImage(walkable(x,y+1) ? TS.wallFace : TS.wall, px_, py);
     } else if(t===DOWN){
       cx.drawImage(TILE_ART.stairs, px_, py);
+      /* 時空之門：兩圈反向旋轉的光環，中間是一團看不透的白。
+         它畫在樓梯上面而不是換掉樓梯 —— 玩家要看得出「那還是那一格」，
+         只是那一格現在通往別的地方。 */
+      if(G.f.gate && s === 2){
+        const gx2 = px_ + 8, gy2 = py + 8;
+        cx.save();
+        cx.globalCompositeOperation = 'lighter';
+        const gp = cx.createRadialGradient(gx2, gy2, 1, gx2, gy2, T*1.6);
+        gp.addColorStop(0, 'rgba(242,239,231,.55)');
+        gp.addColorStop(.45, 'rgba(124,184,234,.30)');
+        gp.addColorStop(1, 'rgba(124,184,234,0)');
+        cx.fillStyle = gp; cx.fillRect(gx2 - T*1.7, gy2 - T*1.7, T*3.4, T*3.4);
+        for(let r2 = 0; r2 < 2; r2++){
+          const sp2 = clock * (r2 ? -1.7 : 2.3);
+          cx.globalAlpha = .85;
+          cx.strokeStyle = r2 ? '#7cb8ea' : '#f2efe7';
+          cx.lineWidth = 1;
+          cx.beginPath();
+          cx.ellipse(gx2, gy2, T*(r2 ? .52 : .34), T*(r2 ? .30 : .46), sp2, 0, Math.PI*2);
+          cx.stroke();
+        }
+        cx.globalAlpha = .55 + .45*Math.sin(clock*4);
+        cx.fillStyle = '#f6efe3';
+        cx.fillRect(gx2 - 2, gy2 - 2, 4, 4);
+        cx.restore();
+      }
     } else {
       const arr = t===CORR ? TS.corr : TS.floor;
       cx.drawImage(arr[(x*7+y*13)%arr.length], px_, py);
       // 地面雜物：用座標雜湊決定，所以同一格永遠長一樣，不會每幀閃爍
       const h = (x*73856093 ^ y*19349663) >>> 0;
       if(h % 9 === 0) cx.drawImage(TPROPS[(h>>4) % TPROPS.length], px_, py);
+      // 貼著牆的那一圈壓暗 —— 牆才會像是站在地板上，而不是貼在旁邊
+      if(!walkable(x, y-1)) cx.drawImage(AO.u, px_, py);
+      if(!walkable(x, y+1)) cx.drawImage(AO.d, px_, py);
+      if(!walkable(x-1, y)) cx.drawImage(AO.l, px_, py);
+      if(!walkable(x+1, y)) cx.drawImage(AO.r, px_, py);
     }
     // 記憶：只記地形。戶外章節（山道、湖畔、塔頂）的光來自天空，
     // 所以「走過但現在看不到」的地方只是暗一點，不是全黑 ——
@@ -7876,10 +9149,13 @@ function draw(dt){
   }
 
   // 實體（含位移插值、待機起伏、攻擊前衝）
+  /* 位移插值。dur 預設 0.11 秒（走一格），但被撞飛是六格 ——
+     用同一個 0.11 秒推完六格，畫面上就是「瞬間換位置」，
+     使用者的原話：「沒有被撞飛的感覺啊？」。長距離要給它時間。 */
   const entPos=(o)=>{
     const a = G.anim.find(v=>v.o===o);
     if(!a) return [o.x, o.y];
-    const k = 1-Math.min(1, a.t/.11);
+    const k = 1-Math.min(1, a.t/(a.dur || .11));
     return [o.x + (a.fx-o.x)*k, o.y + (a.fy-o.y)*k];
   };
   // 待機起伏刻意用 1px 的離散跳動，不是平滑的次像素位移 ——
@@ -7896,20 +9172,30 @@ function draw(dt){
   };
   // 影子：像素圖直接貼在地磚上會「浮」，一圈暗底就把它壓回地面，
   // 同時在生物與地板之間插進一道暗邊，剪影才切得乾淨。
-  const shadow=(dx,dy)=>{
+  const shadow=(dx,dy,sc)=>{
+    const s = sc || 1, X = Math.round(ox+dx*T), Y = Math.round(oy+dy*T);
+    const w2 = Math.round(10*s), o2 = Math.round((T - w2)/2);
     cx.fillStyle='rgba(0,0,0,.42)';
-    cx.fillRect(Math.round(ox+dx*T)+3, Math.round(oy+dy*T)+13, 10, 3);
-    cx.fillRect(Math.round(ox+dx*T)+2, Math.round(oy+dy*T)+14, 12, 1);
+    cx.fillRect(X+o2, Y+13, w2, 3);
+    cx.fillRect(X+o2-1, Y+14, w2+2, 1);
   };
-  const drawEnt=(o, img, name, ph)=>{
+  /* sc = 放大倍率。頭目用 2 ——
+     使用者：「我希望魔王本身在畫面上大隻一點，比較有威嚇性，
+     不然頂多是畫面拉近，臨場感還有點不夠」。完全正確：鏡頭推近會把
+     **所有東西**一起放大，所以頭目跟雜魚的相對大小沒有變，
+     威嚇感自然沒有出來。真正有效的是牠比別人大。
+     錨點放在腳底中央：放大之後往上、往左右長，牠還是站在同一格上。 */
+  const drawEnt=(o, img, name, ph, sc)=>{
     const [dx,dy] = entPos(o);
     const [lx2,ly2] = lungeOf(o);
     const X = Math.round(ox+dx*T + lx2), Y = Math.round(oy+dy*T + ly2 + bobOf(o, ph||0));
-    cx.drawImage(img, X, Y);
+    const s = sc || 1, w2 = T*s;
+    const PX = X - Math.round((s-1)*T/2), PY = Y - Math.round((s-1)*T);
+    cx.drawImage(img, PX, PY, w2, w2);
     if(o.flash > 0){                       // 受擊白閃：整個剪影瞬間打亮
       cx.save();
       cx.globalAlpha = Math.min(1, o.flash/0.09) * .85;
-      cx.drawImage(whiteOf(img, name), X, Y);
+      cx.drawImage(whiteOf(img, name), PX, PY, w2, w2);
       cx.restore();
     }
   };
@@ -7936,10 +9222,27 @@ function draw(dt){
     // 「意識・複寫」的本體也長得跟你一樣 —— 分辨它的方法只有「它不跟著你動」
     const img = m.d.mind === 2 ? heroNow() : (atlas[m.d.id] || atlas.rat);
     const [mx,my] = entPos(m);
-    shadow(mx,my);
+    /* 蓄力中：腳下一圈會呼吸的金光。這一圈就是「下一下是重擊」的預告 ——
+       看得到才有得應對，而看不到的重擊只會讓人覺得是隨機被打死。 */
+    if(m.charged){
+      const bp = .55 + .45*Math.sin(clock*7);
+      const gx = ox + mx*T + 8, gy = oy + my*T + 12;
+      cx.save();
+      cx.globalCompositeOperation = 'lighter';
+      const gg = cx.createRadialGradient(gx, gy, 1, gx, gy, T*1.1);
+      gg.addColorStop(0, 'rgba(245,220,122,' + (0.42*bp).toFixed(3) + ')');
+      gg.addColorStop(1, 'rgba(245,220,122,0)');
+      cx.fillStyle = gg; cx.fillRect(gx - T*1.2, gy - T*1.2, T*2.4, T*2.4);
+      cx.restore();
+      cx.save();
+      cx.globalAlpha = bp; cx.strokeStyle = '#f5dc7a'; cx.lineWidth = 1;
+      cx.beginPath(); cx.arc(gx, gy, T*0.46, 0, Math.PI*2); cx.stroke();
+      cx.restore();
+    }
+    shadow(mx,my, m.d.boss ? BOSS_SCALE : 1);
     cx.save();
     if(m.st['睡']||m.st['麻']) cx.globalAlpha=.55;
-    drawEnt(m, img, m.d.id, m.id*1.7);
+    drawEnt(m, img, m.d.id, m.id*1.7, m.d.boss ? BOSS_SCALE : 1);
     cx.restore();
     if(m.st['睡']){ cx.fillStyle=PAL['r']; cx.fillRect(ox+m.x*T+11, oy+m.y*T+1, 3,1); cx.fillRect(ox+m.x*T+12, oy+m.y*T+2, 1,1); }
     // 血條（只在受傷時出現，不佔用畫面）
@@ -8002,8 +9305,9 @@ function draw(dt){
     const rad = r.r0 + (r.r1 - r.r0) * (1 - (1-k)*(1-k));   // 先快後慢地擴出去
     cx.save();
     cx.globalCompositeOperation = 'lighter';
-    cx.globalAlpha = (1 - k) * .75;
-    cx.strokeStyle = r.col; cx.lineWidth = k < .5 ? 2 : 1;
+    cx.globalAlpha = (1 - k) * (r.wide ? .42 : .75);
+    cx.strokeStyle = r.col;
+    cx.lineWidth = r.wide ? (k < .35 ? 4 : (k < .7 ? 3 : 2)) : (k < .5 ? 2 : 1);
     cx.beginPath(); cx.arc(ox + r.px, oy + r.py, rad, 0, Math.PI*2); cx.stroke();
     cx.restore();
   }
@@ -8082,6 +9386,8 @@ function draw(dt){
   cx.globalAlpha=1;
 
   if(zoomed) cx.restore();
+
+  bossBar();
 
   lastOx=ox; lastOy=oy; lastZ=Z;
   updateTags();
@@ -8382,11 +9688,20 @@ addEventListener('orientationchange', fitViewport);
 
 let last=0;
 function loop(ts){
-  const dt = Math.min(.05, (ts-last)/1000 || 0); last=ts;
+  let dt = Math.min(.05, (ts-last)/1000 || 0); last=ts;
+  /* 頓格：時間暫停，但畫面照畫。回合是按鍵推動的，不是這個迴圈推動的，
+     所以凍住動畫不會影響任何規則 —— 它只影響「看起來」。 */
+  if(G && G.freeze > 0){ G.freeze -= dt; dt = 0; }
   clock += dt;
   if(G){
+    /* 挨打的暈影。衰減放在這裡而不是交給 CSS 的 transition ——
+       血量見底的時候要留一層底色不散，那是 transition 做不到的。 */
+    const floor0 = G.p && G.p.hp > 0 && G.p.hp / G.p.mhp <= .25 ? .34 : 0;
+    G.hurtFx = Math.max(floor0, (G.hurtFx || 0) - dt * 2.2);
+    const hv = document.getElementById('hurt');
+    if(hv) hv.style.opacity = G.hurtFx.toFixed(3);
     for(const a of G.anim) a.t += dt;
-    G.anim = G.anim.filter(a=>a.t<.11);
+    G.anim = G.anim.filter(a => a.t < (a.dur || .11));
     for(const f of G.floats) f.t += dt;
     G.floats = G.floats.filter(f=>f.t<.85);
 
@@ -8556,6 +9871,37 @@ function renderPanel(){
       };
       row.appendChild(b);
       list.appendChild(row);
+    }
+
+    /* 五系全滿之後才出現的那一段。放在五系底下、魔法清單上面 ——
+       它是「加點」這件事的延續，不是另一個系統。 */
+    if(schFull(p)){
+      const rh = document.createElement('div'); rh.className = 'hint';
+      rh.textContent = TX('p.refine','餘力煉成　—　五系已滿。多的點數可以換成永久的身體，死亡也帶不走。');
+      list.appendChild(rh);
+      for(const r of REFINE){
+        const cur = VILLAGE[r.key] | 0;
+        const row = document.createElement('div'); row.className = 'sch';
+        const nm = document.createElement('div'); nm.className = 'nm';
+        nm.textContent = TX('r.' + r.id, r.nm);
+        const st = document.createElement('div'); st.className = 'pips';
+        st.style.flex = '1';
+        st.style.color = 'var(--parch-dim)';
+        st.style.fontSize = '10.5px';
+        st.textContent = M('r.have','目前 +{n}',{n:cur});
+        const b = document.createElement('button');
+        b.textContent = M('r.cost','{n} 點',{n:r.sp});
+        b.disabled = p.sp < r.sp || cur >= r.cap;
+        b.onclick = ()=>{
+          if(!refine(p, r)) return;
+          SFX.play('level');
+          say(M('m.refine','{nm} —— 這一份成長不會因為死亡消失。',
+                {nm:TX('r.' + r.id, r.nm)}),'good');
+          refresh(); renderPanel();
+        };
+        row.appendChild(nm); row.appendChild(st); row.appendChild(b);
+        list.appendChild(row);
+      }
     }
 
     const known = spellsFor(p);
@@ -9007,16 +10353,22 @@ function bossWatch(){
   const on = G.f.bossLock && G.mons.some(m => m.d.boss && G.seen[key(m.x,m.y)] === 2);
   if(on && !G.f.bossSeen){
     G.f.bossSeen = 1;
-    BGM.force('boss');
     if(!REDUCED){ G.zoom = 1.85; G.zoomTo = 1.2; }
-    SFX.play('level');
+    SFX.play('roar');
     G.shake = Math.max(G.shake, 9);
   } else if(!G.f.bossLock && G.f.bossSeen){
-    // 打完了：音樂交還給章節，鏡頭鬆回去
+    // 打完了：鏡頭鬆回去
     G.f.bossSeen = 0;
-    BGM.force(null);
     G.zoomTo = 1;
   }
+  /* 這一層該放哪一首，由這一行說了算：頭目 > 怪物之間 > 章節主題。
+     怪物之間一踏進去就繃緊，一直到離開這一層為止 ——
+     換層時 buildFloor() 會把 G.f 整個換掉，下一回合這裡就自己鬆開了。
+
+     刻意不記「上次設成什麼」：force() 只是把一個變數指過去，
+     重算沒有代價，而記狀態就會漏掉「打完頭目、人還站在怪物之間那一層」
+     的那一次切換 —— 音樂會停在章節主題，而大廳裡還有二十隻怪。 */
+  BGM.force(G.f.bossSeen ? 'boss' : ((G.f.hall && G.f.hall.seen) ? 'hall' : null));
 }
 
 /* 站在砲座上開火。回傳 true 代表這一回合用掉了。 */
@@ -9095,7 +10447,7 @@ function toggleTags(){
 }
 function toggleMute(){
   const on = SFX.toggle();
-  say(M('ui.sfxsw','音效：{v}',{v:TX(on?'ui.on':'ui.off', on?'開':'關')}),'gold');
+  say(M('ui.sfxsw','聲音：{v}',{v:TX(on?'ui.on':'ui.off', on?'開':'關')}),'gold');
   refresh();
 }
 
@@ -9357,7 +10709,7 @@ function applyLangText(){
      直接改 textContent 會把它一起洗掉 —— 只換後面那個文字節點。 */
   const keys2 = [['pick','k.ground','腳下'],['inv','k.bag','背包'],['down','k.down','下樓'],
                  ['wait','k.wait','待機'],['mag','k.magic','魔法'],
-                 ['tags','k.tags','名稱'],['mute','k.mute','音效'],['help','k.help','操作']];
+                 ['tags','k.tags','名稱'],['mute','k.mute','聲音'],['help','k.help','操作']];
   for(const [act,key,zh] of keys2){
     const el = document.querySelector(`[data-act="${act}"]`);
     if(!el) continue;
@@ -9788,7 +11140,8 @@ function renderVillage(){
   head.textContent = TX('v.smith','鐵匠鋪　—　買下就是你的，死亡也帶不走。買完可以繼續鍛造。');
   stock.appendChild(head);
 
-  for(const g of VILLAGE_STOCK){
+  const shelf = stockNow();
+  for(const g of shelf){
     const d = defOf(g.cat, g.id);
     const row = document.createElement('div'); row.className = 'vrow';
     const c = document.createElement('canvas'); c.width = T; c.height = T;
@@ -9810,6 +11163,14 @@ function renderVillage(){
     };
     row.appendChild(c); row.appendChild(nm); row.appendChild(st); row.appendChild(b);
     stock.appendChild(row);
+  }
+  /* 還有沒上架的東西時，先講一聲。玩家看不到未來的貨架，
+     所以「錢先攢著」這個決定要有人告訴他 ——
+     不講的話，看到的就只是一個買得完的鐵匠鋪。 */
+  if(shelf.length < VILLAGE_STOCK.length){
+    const more = document.createElement('div'); more.className = 'vhint';
+    more.textContent = TX('v.more','鐵匠：「再往下走。走得夠深，我打得出比這些更好的東西。」');
+    stock.appendChild(more);
   }
 
   const owned = $('vowned'); owned.innerHTML = '';
