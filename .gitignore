@@ -5,3 +5,5 @@ __pycache__/
 .env*
 .dev.vars*
 work/
+tools/_tripo_tmp/
+tools/__pycache__/
