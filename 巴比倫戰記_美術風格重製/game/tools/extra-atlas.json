@@ -1,0 +1,13 @@
+[
+  {
+    "id": "guardians",
+    "cols": 2,
+    "rows": 1,
+    "keys": [
+      "seraph",
+      "elder"
+    ],
+    "path": "C:\\Users\\X\\.codex\\generated_images\\01a10067-5a52-7d81-b659-a1a3d595a301\\exec-f52a750c-a981-466d-9e31-80f927c81de9.png",
+    "prompt": "Use case: stylized-concept. Actual transparent PNG game sprite atlas, two equal square cells side by side, no backdrop or ground, no shadows behind subjects, NO text, no frames. Left cell: a serene adult female winged guardian, full-body in ivory linen and worn bronze ceremonial armor with lapis stones, large feathered wings folded upward to fit, sacred rosette crown, adult realistic 7-head proportions, no sexualization. Right cell: a small ancient orange jelly elder mascot with kind eyes, long white mustache and eyebrows, modest old bronze circlet and lapis cloth sash, body is one droplet without legs, no weapons. Both rendered in identical hand-painted medieval illuminated manuscript mineral watercolor, fine sepia outlines, Mesopotamian ornament, muted earth and ivory with selective gold, clearly readable at small game size. All subjects centered within their half with 10% empty alpha margin. True transparent background pixels."
+  }
+]

@@ -1,0 +1,116 @@
+/* Mineral pigments, pale parchment controls, quiet battlefield. */
+:root{--night:#181a1b;--panel:rgba(27,32,35,.97);--panel-2:#28353a;--panel-3:#344750;--line:#967d52;--line-2:#485253;--gold:#d4b471;--gold-hi:#f0dcaa;--parch:#eee2c9;--mute:#c2bea9;--dim:#939c95;--foe:#d98774;--ally:#88bbaa;--heal:#a4c28b}
+html,body,#app{height:100%;height:100dvh;overscroll-behavior:none}
+/* The shell must not scroll when a nested setup button receives focus. */
+#app{overflow:clip}
+body{font-size:15px}
+.btn{min-height:46px;border-radius:4px;letter-spacing:.04em;box-shadow:inset 0 0 0 2px #e7d6b50b,0 2px 4px #0003}
+.btn.primary{background:linear-gradient(#dec78c,#bda066);border-color:#edd8a5;color:#292520}
+.btn:focus-visible{outline:3px solid #8fc6d5;outline-offset:3px}
+#bg{filter:brightness(.36) saturate(.48) blur(3px)}
+#sTitle .shade{background:linear-gradient(180deg,rgba(18,25,30,.12) 0%,rgba(18,25,30,.2) 30%,rgba(18,25,30,.88) 68%,#141e24 100%)}
+#sTitle .art{filter:saturate(.78)}
+#sTitle .guardian{display:none}
+#sTitle .tparty{filter:drop-shadow(0 4px 4px #17191ab0)}
+#sTitle .latin{letter-spacing:.18em;font-size:11px;color:#ecd8a8}
+#sTitle .title{color:#f3e8ce;text-shadow:0 3px 12px #172028;font-size:clamp(38px,10vw,70px);letter-spacing:.13em}
+#sTitle .prose{max-width:32em;margin-inline:auto;line-height:1.85}
+.prose{line-height:1.85}
+#sSetup{background:linear-gradient(#192329ee,#192329f5),url('art/sc_temple.jpg') center/cover}
+#sRules{background:linear-gradient(#192329ee,#192329f5),url('art/sc_gate.jpg') center/cover}
+#card{border-left:3px solid var(--gold);background:linear-gradient(115deg,#23323af8,#1d262cf8);border-radius:5px}
+#hint{border-radius:4px;background:#e7d6b5f5;color:#382e23;border:1px solid #ab9061;box-shadow:0 2px 12px #0004}
+#order .o{background:#17232b;border-color:#6d858b}
+#order .o img{object-fit:contain;border-radius:0}
+#order .o.now{box-shadow:0 0 0 2px #e7d6b52b}
+#toast{background:#ede0c5;color:#302d28;border-color:#9f8452}
+#wPanel{background:linear-gradient(115deg,#213640f5,#17242cf8);border:1px solid #bc9b5f;border-radius:6px}
+#wDesc{background:#e7d6b5f2;color:#392d20}
+#dlg{background:#1e2b32f7;border-color:#bba06b}
+#dlg .who{color:#e7c88a}
+#sStory .text{background:linear-gradient(transparent,#162129ef 18%,#162129)}
+#sStory h2{color:#efdbad}
+#sChapter .shade{background:#18272b77!important}
+#tools .btn{width:44px;height:44px;min-height:44px;background:#1b2d36ec}
+#bottom{gap:6px}
+#vign{opacity:.45}
+#flash{opacity:0;max-height:100dvh}
+.edition{font-family:var(--f-latin);font-size:10px;letter-spacing:.2em;color:#c8b58c;margin-bottom:12px}
+@media(max-width:600px){
+ #order{left:10px;top:calc(9px + env(safe-area-inset-top));gap:4px;right:60px}
+ #tools{right:10px;top:calc(9px + env(safe-area-inset-top));gap:8px}
+ #bottom{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));gap:5px}
+ #card{padding:8px 10px;gap:3px 9px;grid-template-columns:44px 1fr}
+ .cardg .pt{width:42px;height:42px}.cardg .pt img{width:40px;height:40px}
+ .nm{font-size:16px}.sub{font-size:12px}
+ #hint{font-size:13px;line-height:1.45;padding:6px 10px}
+ #toast{top:calc(74px + env(safe-area-inset-top));font-size:13px}
+ #sTitle .wrap{padding:24px 22px calc(24px + env(safe-area-inset-bottom))}
+ #sTitle .prose{font-size:14px;max-width:28em}
+ #sTitle .cta{gap:8px;flex-wrap:wrap}
+ #sTitle .cta .btn{min-width:calc(50% - 8px);font-size:15px}
+ #sSetup .wrap,#sRules .wrap{padding:24px 16px calc(24px + env(safe-area-inset-bottom))}
+ #wPanel{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));padding:10px}
+ #wPanel .wh b{font-size:17px}
+ #deploy{left:10px;right:10px;padding:10px;gap:7px}
+ #deploy .opts{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #deploy .opts .btn{font-size:14px;padding:9px 4px}
+ #deploy .opts .btn small{font-size:11px;line-height:1.45}
+ #sStory .text .in{padding-inline:22px}
+ .btn{padding:11px 9px}
+}
+@media(max-height:550px) and (orientation:landscape){#bottom{max-width:620px;gap:3px}#card{padding:5px 9px}#hint{font-size:12px;padding:3px 10px}.btn{min-height:40px;padding:7px 10px}#sTitle .prose{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── 2026-10-04：字小一號、細一點；數字大一點；嵌在 App 裡時把下方按鈕往上推 ── */
+body{font-size:14px}
+.btn{font-weight:500;font-size:15px;letter-spacing:.04em}
+.btn.sm{font-size:13px}
+#dock .btn{padding:10px 4px;font-size:15px;min-height:42px}
+.nm{font-size:15px;font-weight:600}
+.sub{font-size:11px}
+.prose{font-size:15px;line-height:1.8;font-weight:400}
+#hint{font-size:13px;font-weight:400}
+#dlg{font-size:14px}
+#card{padding:6px 10px;gap:2px 10px;grid-template-columns:42px 1fr}
+.cardg .pt{width:42px;height:42px}.cardg .pt img{width:40px;height:40px}
+.bar{height:9px}.bar b{font-size:9px;top:-2px}
+.stats{font-size:11px;gap:8px}
+/* 傷害、回復數字：大而清楚 */
+.fnum{font-size:34px;letter-spacing:.02em}
+.fnum.crit{font-size:46px}
+.fnum.heal{font-size:32px}
+.fnum.txt{font-size:15px;font-weight:500}
+.fnum.miss{font-family:var(--f-latin);font-size:22px;color:#cfc6b4}
+/* 在 claude.ai App 裡（網頁被嵌在框裡）底部常被擋住：多留一點空間 */
+html.framed #bottom{bottom:calc(46px + env(safe-area-inset-bottom,0px))}
+html.framed #wPanel{bottom:calc(46px + env(safe-area-inset-bottom,0px))}
+@media(max-width:600px){
+ #bottom{gap:5px}
+ #dock{gap:5px}
+ #card{padding:5px 9px;grid-template-columns:38px 1fr}
+ .cardg .pt{width:38px;height:38px}.cardg .pt img{width:36px;height:36px}
+}
+.wtop .wbtn{gap:4px}.wtop .wbtn .btn{min-height:32px;padding:4px 9px;font-size:12px}
+.wtop b{font-size:18px}.wstat{flex-wrap:wrap;gap:2px 8px}
+/* 佈陣面板：精簡；嵌在 App 裡時往上推 */
+#deploy{padding:10px 12px;gap:6px}
+#deploy h3{font-size:15px;font-weight:600}
+#deploy .cta{display:flex;gap:10px;align-items:center}
+#deploy .cta .btn{flex:0 0 auto;min-width:120px}
+#deploy .cta .hint{font-size:12px;line-height:1.5}
+html.framed #deploy{bottom:calc(46px + env(safe-area-inset-bottom,0px))}
+.wzoom{position:absolute;right:10px;top:38%;display:grid;gap:6px;z-index:3}
+.wzoom .btn{width:40px;height:40px;min-height:40px;padding:0;font-size:18px;border-radius:50%;background:rgba(27,32,35,.9)}
+/* ── 2026-10-05：App 的框會切掉右邊一截 —— 文字區右側多留空間，長句一定換行 ── */
+.wrap{grid-template-columns:minmax(0,1fr)}
+.wrap>*{min-width:0;max-width:100%}
+.prose,.prose p,h1.title,#dlg .say,.soon div,.latin{overflow-wrap:anywhere;word-break:break-word}
+#dlg{box-sizing:border-box;max-height:42vh;overflow-y:auto}
+#dlg .say{min-width:0}
+html.framed .wrap{padding-left:20px;padding-right:44px}
+html.framed .prose{max-width:min(32em,calc(100vw - 72px))}
+html.framed #dlg{left:12px;right:40px;bottom:calc(52px + env(safe-area-inset-bottom,0px))}
+html.framed #big,html.framed #bossTitle{max-width:calc(100vw - 60px);white-space:normal;left:calc(50% - 14px)}
+html.framed #toast{max-width:calc(100% - 70px);left:calc(50% - 14px)}
+#bossTitle{white-space:normal;width:max-content;max-width:calc(100vw - 24px)}

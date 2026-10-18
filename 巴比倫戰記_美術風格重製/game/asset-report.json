@@ -1,0 +1,582 @@
+{
+  "generated": 85,
+  "preserved": 30,
+  "remaining": [],
+  "assets": [
+    {
+      "key": "hum_warrior_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_mage_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_support_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_rogue_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_summoner_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_sorcerer_m",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_warrior_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_mage_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_support_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_rogue_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_summoner_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "hum_sorcerer_f",
+      "status": "preserved-original",
+      "reason": "Q-proportions-retained"
+    },
+    {
+      "key": "mon_slime",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_shroom",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_goat",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_dryad",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_crab",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_salam",
+      "atlas": "creatures-a",
+      "status": "generated"
+    },
+    {
+      "key": "mon_scree",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_rat",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_centip",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_wolf",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_refr",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_ash",
+      "atlas": "creatures-b",
+      "status": "generated"
+    },
+    {
+      "key": "mon_imp",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_hawk",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_tengu",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_golem",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_tanuki",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_odin",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_kensei",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "mon_skel",
+      "atlas": "creatures-c",
+      "status": "generated"
+    },
+    {
+      "key": "fiend_earth",
+      "atlas": "fiends",
+      "status": "generated"
+    },
+    {
+      "key": "fiend_water",
+      "atlas": "fiends",
+      "status": "generated"
+    },
+    {
+      "key": "fiend_fire",
+      "atlas": "fiends",
+      "status": "generated"
+    },
+    {
+      "key": "fiend_wind",
+      "atlas": "fiends",
+      "status": "generated"
+    },
+    {
+      "key": "fiend_lord",
+      "atlas": "fiends",
+      "status": "generated"
+    },
+    {
+      "key": "sum_tiger",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_turtle",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_phoenix",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_dragon",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_osis",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_risan",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_imt",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "sum_bahamut",
+      "atlas": "summons",
+      "status": "generated"
+    },
+    {
+      "key": "worn_helm_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_helm_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_helm_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_rhat_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_rhat_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_rhat_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_hood_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_hood_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_hood_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_band_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_band_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_band_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_crown_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_crown_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_crown_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_cone_front",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_cone_side",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "worn_cone_back",
+      "status": "preserved-original",
+      "reason": "mascot-identity-fixed"
+    },
+    {
+      "key": "weap_steel",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "weap_brnz",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "shld_steel",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "wand_gem",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "wand_vine",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "wand_gold",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "wand_thorn",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "herb_heal",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "herb_elix",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "herb_hst",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "food_fruit",
+      "atlas": "equipment",
+      "status": "generated"
+    },
+    {
+      "key": "blk_rubble",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "blk_ice",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "blk_icer",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "blk_ember",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "blk_stone",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "prop_tree",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "prop_pine",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "prop_torch",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "prop_crate",
+      "atlas": "props",
+      "status": "generated"
+    },
+    {
+      "key": "forest-floor1",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "forest-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "stone-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "lake-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "lake-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "cave-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "cave-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "snow-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "snow-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "ice-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "ice-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "ash-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "ash-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "spire-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "spire-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "temple-floor0",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "temple-wallface",
+      "atlas": "terrain",
+      "status": "generated"
+    },
+    {
+      "key": "sc_babel",
+      "atlas": "scenes-1",
+      "status": "generated"
+    },
+    {
+      "key": "sc_altar",
+      "atlas": "scenes-1",
+      "status": "generated"
+    },
+    {
+      "key": "sc_stones",
+      "atlas": "scenes-1",
+      "status": "generated"
+    },
+    {
+      "key": "sc_light",
+      "atlas": "scenes-1",
+      "status": "generated"
+    },
+    {
+      "key": "sc_forest",
+      "atlas": "scenes-2",
+      "status": "generated"
+    },
+    {
+      "key": "sc_watcher",
+      "atlas": "scenes-2",
+      "status": "generated"
+    },
+    {
+      "key": "sc_cave",
+      "atlas": "scenes-2",
+      "status": "generated"
+    },
+    {
+      "key": "sc_ice",
+      "atlas": "scenes-2",
+      "status": "generated"
+    },
+    {
+      "key": "sc_fire",
+      "atlas": "scenes-3",
+      "status": "generated"
+    },
+    {
+      "key": "sc_tower",
+      "atlas": "scenes-3",
+      "status": "generated"
+    },
+    {
+      "key": "sc_summit",
+      "atlas": "scenes-3",
+      "status": "generated"
+    },
+    {
+      "key": "sc_temple",
+      "atlas": "scenes-3",
+      "status": "generated"
+    },
+    {
+      "key": "sc_gate",
+      "atlas": "scenes-gate",
+      "status": "generated"
+    },
+    {
+      "key": "seraph",
+      "atlas": "guardians",
+      "status": "generated"
+    },
+    {
+      "key": "elder",
+      "atlas": "guardians",
+      "status": "generated"
+    }
+  ]
+}
