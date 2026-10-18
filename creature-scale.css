@@ -1,5 +1,0 @@
-/* Keep both actor centers and the common floor fixed when changing creature size. */
-#duel .dfig[data-creature="1"]{width:calc(38% * var(--creature-scale));height:calc(100% * var(--creature-scale))}
-#duel .dfig.L[data-creature="1"]{left:calc(26% - 19% * var(--creature-scale))}
-#duel .dfig.R[data-creature="1"]{right:calc(26% - 19% * var(--creature-scale))}
-#duel .dfig[data-creature="1"] .dsh{height:clamp(5px,calc(22px * var(--creature-scale)),14px);bottom:-3px}

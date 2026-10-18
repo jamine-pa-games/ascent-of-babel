@@ -1,6 +1,0 @@
-{
-  "key": "evil_ugal",
-  "path": "C:\\Users\\X\\.codex\\generated_images\\01a10067-5a52-7d81-b659-a1a3d595a301\\exec-fb8865f7-3e38-4f18-bda0-3319f0b2a134.png",
-  "prompt": "Use case: precise-object-edit. This is Ugallu game sprite. Remove ONLY BOTH feathered wings completely, leaving fully transparent empty space where the wings were. Preserve lion head, human torso and arms, bird claw feet, dagger, scepter, costume, colors, full-body pose, all painted detail exactly. No wings or feathers behind shoulders; natural shoulder silhouette. Keep transparent PNG with genuine alpha, no background, no text. Whole figure fully visible with modest clear margins. Do not redesign.",
-  "hint": "Generated images are saved to C:\\Users\\X\\.codex\\generated_images\\01a10067-5a52-7d81-b659-a1a3d595a301 as C:\\Users\\X\\.codex\\generated_images\\01a10067-5a52-7d81-b659-a1a3d595a301\\exec-fb8865f7-3e38-4f18-bda0-3319f0b2a134.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
-}

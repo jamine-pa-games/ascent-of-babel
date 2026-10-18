@@ -1,4 +1,0 @@
-const http=require('http'),fs=require('fs'),path=require('path');
-const root=path.resolve(__dirname,'..');
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.json':'application/json'};
-http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost');let f=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(!f.startsWith(root+path.sep)&&f!==root){res.writeHead(403).end();return;}if(f===root)f=path.join(root,'index.html');if(!fs.existsSync(f)){res.writeHead(404).end('Not found');return;}res.writeHead(200,{'Content-Type':mime[path.extname(f)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(f).pipe(res);}catch(e){res.writeHead(500).end(e.message);}}).listen(4178,'127.0.0.1',()=>console.log('Babylon preview http://127.0.0.1:4178'));
