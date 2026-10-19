@@ -1,1 +1,9 @@
-{}
+{
+  "slime": {
+    "file": "slime.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19"
+  }
+}
