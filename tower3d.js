@@ -269,7 +269,7 @@ body.t3d #tags{display:none}
      帽子：主角整顆都是頭，scl 把帽子撐寬包住兩側和後面，tilt 往後仰讓眼睛露出來。 */
   const GEAR_SLOT = TW.gearSlot = {
     weap: { hand: [-.6, .42, .24], dir: [-.25, 1, .45], size: .62 },
-    shld: { hand: [.62, .39, .22], dir: [1, 0, .75], size: .44, thick: 2.2, gap: .02 },
+    shld: { hand: [.62, .42, .22], dir: [1, 0, 1.1], size: .76, thick: 2.2, gap: .02 },
     // Tripo 的帽子面框朝 +x，轉 -90° 朝前；flare 讓兩側往下展開，back 讓後面包住身體，armY 在手的上方挖拱形
     hat:  { pos: [0, .74, -.06], rot: [0, -Math.PI / 2, 0], tilt: -.2, size: 1.12, scl: [1.4, .95, 1.15], flare: .35, back: .35, armY: .56 },
   };
@@ -287,33 +287,143 @@ body.t3d #tags{display:none}
     const len = t1 - t0;
     const avgR = (a, b) => { let s = 0, n = 0; P.forEach((v, i) => { if (t[i] >= a && t[i] <= b) { s += v.clone().sub(c).addScaledVector(d, -t[i]).length(); n++; } }); return n ? s / n : 0; };
     if (avgR(t0, t0 + len * .3) > avgR(t1 - len * .3, t1)) { d.negate(); [t0, t1] = [-t1, -t0]; }   // d：握把（細）→ 頭（粗）
-    const grip = c.clone().addScaledVector(d, t0 + len * .2);
-    const ax = ['x', 'y', 'z'].reduce((a, b) => size[b] < size[a] ? b : a), o = ['x', 'y', 'z'].filter(a => a !== ax);
-    const rr = Math.min(size[o[0]], size[o[1]]) * .22; let hi = -1e9, lo = 1e9;
-    for (const v of P) if (Math.hypot(v[o[0]] - ctr[o[0]], v[o[1]] - ctr[o[1]]) < rr) { hi = Math.max(hi, v[ax] - ctr[ax]); lo = Math.min(lo, v[ax] - ctr[ax]); }
-    const normal = new THREE.Vector3(); normal[ax] = hi >= -lo ? 1 : -1;
-    return { size, ctr, axis: d, len, grip, thinAxis: ax, normal };
+    const grip = c.clone().addScaledVector(d, t0 + len * .2), gripAlt = c.clone().addScaledVector(d, t1 - len * .2);
+    // 盾牌平面：第二主軸 e2，法線 = e1 × e2（Tripo 做出來本身歪斜也抓得到）
+    let e2 = new THREE.Vector3(1, 0, 0).addScaledVector(d, -d.x).normalize();
+    for (let it = 0; it < 24; it++) { const n = new THREE.Vector3(); for (const v of P) { const q = v.clone().sub(c); n.addScaledVector(q, q.dot(e2)); } n.addScaledVector(d, -n.dot(d)); if (n.lengthSq()) e2 = n.normalize(); }
+    const normal = new THREE.Vector3().crossVectors(d, e2).normalize();
+    const u = P.map(v => v.clone().sub(c)), s1 = u.map(q => q.dot(d)), s2 = u.map(q => q.dot(e2)), s3 = u.map(q => q.dot(normal));
+    const r1 = (Math.max(...s1) - Math.min(...s1)) * .11, r2 = (Math.max(...s2) - Math.min(...s2)) * .11;
+    let hi = -1e9, lo = 1e9; u.forEach((q, i) => { if (Math.abs(s1[i]) < r1 && Math.abs(s2[i]) < r2) { hi = Math.max(hi, s3[i]); lo = Math.min(lo, s3[i]); } });
+    if (hi < -lo) normal.negate();                                     // 中間凸出比較多的那面當正面（判反用 turn）
+    const thick = Math.max(...s3) - Math.min(...s3), face = Math.max(Math.max(...s1) - Math.min(...s1), Math.max(...s2) - Math.min(...s2));
+    return { size, ctr, cen: c, axis: d, len, grip, gripAlt, normal, thick, face };
+  }
+  // 把模型的 normal 轉到 out，同時讓模型原本的上方（+y）盡量朝上
+  function uprightTo(normal, out) {
+    const basis = (n, up) => { const u = up.clone().addScaledVector(n, -up.dot(n)); if (u.lengthSq() < 1e-6) u.set(0, 0, 1).addScaledVector(n, -n.z); u.normalize(); return new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(u, n), u, n); };
+    const Y = new THREE.Vector3(0, 1, 0);
+    return new THREE.Quaternion().setFromRotationMatrix(basis(out.clone().normalize(), Y).multiply(basis(normal.clone().normalize(), Y).invert()));
   }
   function placeGear(slot, a, d) {
     const info = a.gear || (a.gear = gearInfo(a.scene));
     const g = new THREE.Group(), m = cloneS(a.scene), r = new THREE.Group();
     if (slot === 'weap') {
-      r.quaternion.setFromUnitVectors(info.axis, new THREE.Vector3(...d.dir).normalize()); r.scale.setScalar(d.size / Math.max(info.len, 1e-3));
-      m.position.copy(info.grip).negate(); r.add(m); g.position.fromArray(d.hand);
+      const axis = d.flip ? info.axis.clone().negate() : info.axis;   // flip：劍的護手比劍身寬時，自動判斷的握把會反過來
+      r.quaternion.setFromUnitVectors(axis, new THREE.Vector3(...d.dir).normalize()); r.scale.setScalar(d.size / Math.max(info.len, 1e-3));
+      m.position.copy(d.flip ? info.gripAlt : info.grip).negate(); r.add(m); g.position.fromArray(d.hand);
     } else if (slot === 'shld') {
-      const n = new THREE.Group(); n.scale[info.thinAxis] = d.thick || 1; m.position.copy(info.ctr).negate(); n.add(m);
-      const k = d.size / Math.max(...['x', 'y', 'z'].filter(a => a !== info.thinAxis).map(a => info.size[a]), 1e-3);
-      const out = new THREE.Vector3(...d.dir).normalize();
-      r.quaternion.setFromUnitVectors(info.normal, out); r.scale.setScalar(k); r.add(n);
-      g.position.fromArray(d.hand).addScaledVector(out, info.size[info.thinAxis] * (d.thick || 1) * k / 2 + (d.gap || 0));
+      const n = new THREE.Group(), N = d.turn ? info.normal.clone().negate() : info.normal, t = (d.thick || 1) - 1;   // 沿法線加厚：I + t·N·Nᵀ
+      n.matrixAutoUpdate = false;
+      n.matrix.set(1 + t * N.x * N.x, t * N.x * N.y, t * N.x * N.z, 0, t * N.y * N.x, 1 + t * N.y * N.y, t * N.y * N.z, 0, t * N.z * N.x, t * N.z * N.y, 1 + t * N.z * N.z, 0, 0, 0, 0, 1);
+      m.position.copy(info.cen).negate(); n.add(m);
+      const k = d.size / Math.max(info.face, 1e-3), out = new THREE.Vector3(...d.dir).normalize();
+      r.quaternion.copy(uprightTo(N, out)); r.scale.setScalar(k); r.add(n);
+      g.position.fromArray(d.hand).addScaledVector(out, info.thick * (d.thick || 1) * k / 2 + (d.gap || 0));
     } else {
       r.rotation.set(...d.rot); r.scale.setScalar(d.size / Math.max(info.size.x, info.size.y, info.size.z, 1e-3));
       m.position.copy(info.ctr).negate(); r.add(m); g.add(r);
+      if (d.clean) dropBits(m, d.clean);
       if (d.flare || d.back) bendHat(g, m, d);
-      g.position.fromArray(d.pos); if (d.scl) g.scale.set(...d.scl); g.rotation.x = d.tilt || 0;
+      g.position.fromArray(d.pos); if (d.scl) g.scale.set(...d.scl); g.rotation.x = d.tilt || 0; g.rotation.z = d.roll || 0;
+      if (d.cut != null) cutBelow(g, m, d.cut);
+      if (d.settle != null) settleOnHead(g, m, d.settle);
+      if (d.hug != null) hugHead(g, m, d.hug, 9, d.face || null);
+      if (d.cap) { const o = new THREE.Group(); g.add(r); o.add(g, makeCap(m, d.cap)); return o; }
     }
     if (!r.parent) g.add(r);
     return g;
+  }
+  // 拿掉沒連在主體上的小碎片（Tripo 偶爾會把參考圖旁邊的雜點也做成模型）
+  function dropBits(m, frac) {
+    m.traverse(n => {
+      if (!n.isMesh || !n.geometry.index) return;
+      if (!n.userData.own) { n.geometry = n.geometry.clone(); n.userData.own = 1; }
+      const g = n.geometry, idx = g.index.array, pos = g.attributes.position, nv = pos.count;
+      // 位置相同的頂點當同一點（UV 接縫會把頂點拆開）
+      const key = new Map(), root = new Int32Array(nv);
+      for (let i = 0; i < nv; i++) { const k = pos.getX(i).toFixed(4) + ',' + pos.getY(i).toFixed(4) + ',' + pos.getZ(i).toFixed(4); if (!key.has(k)) key.set(k, i); root[i] = key.get(k); }
+      const par = Int32Array.from({ length: nv }, (_, i) => i);
+      const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+      const join = (a, b) => { a = find(root[a]); b = find(root[b]); if (a !== b) par[a] = b; };
+      for (let t = 0; t < idx.length; t += 3) { join(idx[t], idx[t + 1]); join(idx[t + 1], idx[t + 2]); }
+      const cnt = new Map();
+      for (let t = 0; t < idx.length; t += 3) { const r = find(root[idx[t]]); cnt.set(r, (cnt.get(r) || 0) + 1); }
+      const total = idx.length / 3, keep = [];
+      for (let t = 0; t < idx.length; t += 3) if (cnt.get(find(root[idx[t]])) >= total * frac) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+      g.setIndex(keep);
+    });
+  }
+  // 剪掉主角座標 y 低於 cut 的三角形（例如頭巾拖到地上的長尾巴）
+  function cutBelow(g, m, cut) {
+    g.updateMatrixWorld(true); const v = new THREE.Vector3();
+    m.traverse(n => {
+      if (!n.isMesh || !n.geometry.index) return;
+      if (!n.userData.own) { n.geometry = n.geometry.clone(); n.userData.own = 1; }
+      const idx = n.geometry.index.array, p = n.geometry.attributes.position, keep = [];
+      const y = i => v.fromBufferAttribute(p, i).applyMatrix4(n.matrixWorld).y;
+      for (let t = 0; t < idx.length; t += 3) if (Math.max(y(idx[t]), y(idx[t + 1]), y(idx[t + 2])) >= cut) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+      n.geometry.setIndex(keep);
+    });
+  }
+  // 布罩：貼著頭的球面，把橘色包起來（頭巾、兜帽用）。角度都以頭頂為 0°：
+  // front / back = 正前方、正後方往下包到幾度；win = [左右半寬, 上緣, 下緣] 在正前方留給眼睛的開口
+  function makeCap(m, c) {
+    const R = HEAD.r + (c.gap || .006), geo = new THREE.SphereGeometry(R, 64, 40).toNonIndexed(), p = geo.attributes.position;
+    const keep = [], uv = geo.attributes.uv, kuv = [], D = Math.PI / 180, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i += 3) {
+      v.set(0, 0, 0); for (let k = 0; k < 3; k++) v.x += p.getX(i + k) / 3, v.y += p.getY(i + k) / 3, v.z += p.getZ(i + k) / 3;
+      const polar = Math.acos(Math.max(-1, Math.min(1, v.y / v.length()))) / D, az = Math.atan2(v.x, v.z) / D;
+      const lim = c.back + (c.front - c.back) * (1 + Math.cos(az * D)) / 2;
+      const win = c.win && Math.abs(az) < c.win[0] && polar > c.win[1] && polar < c.win[2];
+      if (polar < lim && !win) for (let k = 0; k < 3; k++) { keep.push(p.getX(i + k), p.getY(i + k), p.getZ(i + k)); kuv.push(uv.getX(i + k), uv.getY(i + k)); }
+    }
+    const g2 = new THREE.BufferGeometry();
+    g2.setAttribute('position', new THREE.Float32BufferAttribute(keep, 3)); g2.setAttribute('uv', new THREE.Float32BufferAttribute(kuv, 2)); g2.computeVertexNormals();
+    let mat = null; m.traverse(n => { if (!mat && n.isMesh) mat = n.material; });
+    mat = c.color ? new THREE.MeshStandardMaterial({ color: new THREE.Color(c.color).convertSRGBToLinear(), roughness: .85, metalness: 0 }) : mat.clone();
+    mat.side = THREE.DoubleSide;
+    const mesh = new THREE.Mesh(g2, mat); mesh.position.y = HEAD.y; mesh.frustumCulled = false;
+    if (c.skirt) {                                                 // 袍子下擺：把手和腳也包進去 skirt = [上半徑, 下半徑, 高度]
+      const [rt, rb, h] = c.skirt, sk = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 48, 1, true), mat);
+      sk.position.y = h / 2 - HEAD.y; sk.frustumCulled = false; mesh.add(sk);
+    }
+    return mesh;
+  }
+  // 放下去：帽子從正上方落下，停在帽子內面剛好碰到頭頂（上半球）的位置 —— 不穿進頭、也不浮著
+  function settleOnHead(g, m, gap) {
+    g.updateMatrixWorld(true);
+    const v = new THREE.Vector3(), R = HEAD.r + gap; let lift = -1e9;
+    m.traverse(n => {
+      if (!n.isMesh) return; const p = n.geometry.attributes.position, idx = n.geometry.index, used = idx ? new Set(idx.array) : null;
+      for (let j = 0; j < p.count; j++) {
+        if (used && !used.has(j)) continue;
+        v.fromBufferAttribute(p, j).applyMatrix4(n.matrixWorld);
+        const h = Math.hypot(v.x, v.z); if (h >= R) continue;
+        const surf = HEAD.y + Math.sqrt(R * R - h * h);          // 這個水平位置的頭頂高度
+        if (v.y > HEAD.y - .02) lift = Math.max(lift, surf - v.y);
+      }
+    });
+    if (lift > -1e8) g.position.y += lift;
+  }
+  // 伏貼頭頂：主角的頭幾乎是一顆球（中心高 .48、半徑 .48），帽子陷進頭裡的點推到球面外 gap 的地方
+  const HEAD = { y: .48, r: .48 };
+  function hugHead(g, m, gap, deep = 9, face = null) {   // face = [左右半寬°, 上緣°, 下緣°]：臉的範圍不往外推（布的開口露出臉）
+    g.updateMatrixWorld(true);                                     // g 還沒掛上主角，matrixWorld 就是主角座標
+    const v = new THREE.Vector3(), R = HEAD.r + gap;
+    m.traverse(n => {
+      if (!n.isMesh) return;
+      if (!n.userData.own) { n.geometry = n.geometry.clone(); n.userData.own = 1; }
+      const M = n.matrixWorld, Mi = new THREE.Matrix4().copy(M).invert(), p = n.geometry.attributes.position;
+      for (let j = 0; j < p.count; j++) {
+        v.fromBufferAttribute(p, j).applyMatrix4(M);
+        const dx = v.x, dy = v.y - HEAD.y, dz = v.z, L = Math.hypot(dx, dy, dz);
+        const inFace = face && (() => { const pol = Math.acos(Math.max(-1, Math.min(1, dy / (L || 1)))) * 57.3, az = Math.atan2(dx, dz) * 57.3; return Math.abs(az) < face[0] && pol > face[1] && pol < face[2]; })();
+        if (!inFace && L < R && L > R - deep && dy > -HEAD.r * .35) { const s = R / L; v.set(dx * s, HEAD.y + dy * s, dz * s); }   // 太深的點本來就藏在頭裡，不拉出來（避免抹在頭上）
+        v.applyMatrix4(Mi); p.setXYZ(j, v.x, v.y, v.z);
+      }
+      p.needsUpdate = true; n.geometry.computeVertexNormals(); n.geometry.computeBoundingSphere();
+    });
   }
   // 帽子變形（主角座標，面向 +z）：越往下越寬、後半部往後鼓，兩側在手上方抬成拱形
   function bendHat(g, m, d) {

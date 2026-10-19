@@ -16,7 +16,8 @@
   },
   "weap_club": {
     "file": "weap_club.glb",
-    "made": "2026-10-19"
+    "made": "2026-10-19",
+    "size": 0.806
   },
   "shld_leath": {
     "file": "shld_leath.glb",
@@ -24,6 +25,276 @@
   },
   "hat_helm": {
     "file": "hat_helm.glb",
+    "made": "2026-10-19",
+    "hug": 0.012
+  },
+  "weap_brnz": {
+    "file": "weap_brnz.glb",
+    "made": "2026-10-19",
+    "size": 1.105,
+    "flip": true
+  },
+  "weap_spear": {
+    "file": "weap_spear.glb",
+    "made": "2026-10-19",
+    "size": 1.495
+  },
+  "weap_steel": {
+    "file": "weap_steel.glb",
+    "made": "2026-10-19",
+    "size": 1.17,
+    "flip": true
+  },
+  "weap_mith": {
+    "file": "weap_mith.glb",
+    "made": "2026-10-19",
+    "size": 1.17,
+    "flip": true
+  },
+  "weap_drgn": {
+    "file": "weap_drgn.glb",
+    "made": "2026-10-19",
+    "size": 1.105
+  },
+  "weap_sky": {
+    "file": "weap_sky.glb",
+    "made": "2026-10-19",
+    "size": 1.235,
+    "flip": true
+  },
+  "weap_babel": {
+    "file": "weap_babel.glb",
+    "made": "2026-10-19",
+    "size": 1.3
+  },
+  "shld_wood": {
+    "file": "shld_wood.glb",
     "made": "2026-10-19"
+  },
+  "shld_steel": {
+    "file": "shld_steel.glb",
+    "made": "2026-10-19",
+    "turn": true
+  },
+  "shld_mirr": {
+    "file": "shld_mirr.glb",
+    "made": "2026-10-19"
+  },
+  "shld_drac": {
+    "file": "shld_drac.glb",
+    "made": "2026-10-19"
+  },
+  "shld_aegis": {
+    "file": "shld_aegis.glb",
+    "made": "2026-10-19"
+  },
+  "hat_beret": {
+    "file": "hat_beret.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": -0.55,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.1,
+    "pos": [
+      0,
+      0.84,
+      -0.1
+    ]
+  },
+  "hat_rhat": {
+    "file": "hat_rhat.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      1.5707963267948966,
+      0
+    ],
+    "tilt": -0.42,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": null,
+    "size": 1.15,
+    "pos": [
+      0,
+      0.98,
+      -0.17
+    ]
+  },
+  "hat_crown": {
+    "file": "hat_crown.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": 0,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.3,
+    "pos": [
+      0,
+      0.98,
+      0
+    ],
+    "clean": 0.05
+  },
+  "hat_hood": {
+    "file": "hat_hood.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": -0.15,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.55,
+    "pos": [
+      0,
+      0.5,
+      -0.05
+    ],
+    "face": [
+      42,
+      48,
+      100
+    ]
+  },
+  "hat_plume": {
+    "file": "hat_plume.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.2207963267948965,
+      0
+    ],
+    "tilt": -0.45,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.1,
+    "pos": [
+      0,
+      0.84,
+      -0.08
+    ],
+    "roll": 0
+  },
+  "hat_band": {
+    "file": "hat_band.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": 0,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.01,
+    "size": 0.95,
+    "pos": [
+      0,
+      0.62,
+      0
+    ],
+    "cut": 0.4,
+    "roll": -0.48
+  },
+  "hat_oni": {
+    "file": "hat_oni.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": 0,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.6,
+    "pos": [
+      0,
+      0.6,
+      -0.05
+    ]
+  },
+  "hat_cone": {
+    "file": "hat_cone.glb",
+    "made": "2026-10-19",
+    "rot": [
+      0,
+      -1.5707963267948966,
+      0
+    ],
+    "tilt": 0,
+    "scl": [
+      1,
+      1,
+      1
+    ],
+    "flare": 0,
+    "back": 0,
+    "armY": null,
+    "hug": 0.012,
+    "size": 1.15,
+    "pos": [
+      0.06,
+      0.9,
+      0
+    ]
   }
 }
