@@ -5,5 +5,25 @@
     "clips": [],
     "h": 0.95,
     "made": "2026-10-19"
+  },
+  "hero": {
+    "file": "hero.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "yaw": -90,
+    "made": "2026-10-19"
+  },
+  "weap_club": {
+    "file": "weap_club.glb",
+    "made": "2026-10-19"
+  },
+  "shld_leath": {
+    "file": "shld_leath.glb",
+    "made": "2026-10-19"
+  },
+  "hat_helm": {
+    "file": "hat_helm.glb",
+    "made": "2026-10-19"
   }
 }

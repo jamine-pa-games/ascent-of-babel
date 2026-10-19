@@ -208,6 +208,7 @@ body.t3d #tags{display:none}
     scene.add(grp);
     ents.set(o, e);
     if (!isHero && o.d && TW.manifest[o.d.id] && !TW.failed[o.d.id]) loadModel(o.d.id).then(a => attachModel(e, o.d.id, a), () => { });
+    if (isHero && TW.manifest.hero && !TW.failed.hero) loadModel('hero').then(a => attachModel(e, 'hero', a), () => { });
     return e;
   }
 
@@ -261,6 +262,104 @@ body.t3d #tags{display:none}
     e.grp.add(holder);
     e.model = { holder, inner, mixer, acts, mats, cur: null, yawFix: (ent.yaw || 0) * Math.PI / 180, t: Math.random() * 9 };
   }
+  /* ── 主角裝備：manifest 裡的 weap_<id>／shld_<id>／hat_<id> 掛在主角模型上 ──
+     座標以主角面向 +z 為準（右手在 -x）。每件裝備可在 manifest 裡覆蓋同名欄位。
+     武器：自動找長軸，細的那端當握把，握把放進手裡。
+     盾牌：最薄的軸是厚度（thick 倍數加厚），凸出的那面朝外，放在手的外側不讓手穿出。
+     帽子：主角整顆都是頭，scl 把帽子撐寬包住兩側和後面，tilt 往後仰讓眼睛露出來。 */
+  const GEAR_SLOT = TW.gearSlot = {
+    weap: { hand: [-.6, .42, .24], dir: [-.25, 1, .45], size: .62 },
+    shld: { hand: [.62, .39, .22], dir: [1, 0, .75], size: .44, thick: 2.2, gap: .02 },
+    // Tripo 的帽子面框朝 +x，轉 -90° 朝前；flare 讓兩側往下展開，back 讓後面包住身體，armY 在手的上方挖拱形
+    hat:  { pos: [0, .74, -.06], rot: [0, -Math.PI / 2, 0], tilt: -.2, size: 1.12, scl: [1.4, .95, 1.15], flare: .35, back: .35, armY: .56 },
+  };
+  function gearInfo(scn) {
+    const P = []; scn.updateMatrixWorld(true);
+    scn.traverse(n => {
+      if (!n.isMesh) return; const p = n.geometry.attributes.position, v = new THREE.Vector3();
+      const st = Math.max(1, Math.floor(p.count / 4000)); for (let i = 0; i < p.count; i += st) P.push(v.fromBufferAttribute(p, i).applyMatrix4(n.matrixWorld).clone());
+    });
+    const box = new THREE.Box3().setFromObject(scn), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    const c = P.reduce((a, v) => a.add(v), new THREE.Vector3()).divideScalar(P.length || 1);
+    let d = new THREE.Vector3(.3, 1, .2).normalize();
+    for (let it = 0; it < 24; it++) { const n = new THREE.Vector3(); for (const v of P) { const q = v.clone().sub(c); n.addScaledVector(q, q.dot(d)); } if (n.lengthSq()) d = n.normalize(); }
+    const t = P.map(v => v.clone().sub(c).dot(d)); let t0 = Math.min(...t), t1 = Math.max(...t);
+    const len = t1 - t0;
+    const avgR = (a, b) => { let s = 0, n = 0; P.forEach((v, i) => { if (t[i] >= a && t[i] <= b) { s += v.clone().sub(c).addScaledVector(d, -t[i]).length(); n++; } }); return n ? s / n : 0; };
+    if (avgR(t0, t0 + len * .3) > avgR(t1 - len * .3, t1)) { d.negate(); [t0, t1] = [-t1, -t0]; }   // d：握把（細）→ 頭（粗）
+    const grip = c.clone().addScaledVector(d, t0 + len * .2);
+    const ax = ['x', 'y', 'z'].reduce((a, b) => size[b] < size[a] ? b : a), o = ['x', 'y', 'z'].filter(a => a !== ax);
+    const rr = Math.min(size[o[0]], size[o[1]]) * .22; let hi = -1e9, lo = 1e9;
+    for (const v of P) if (Math.hypot(v[o[0]] - ctr[o[0]], v[o[1]] - ctr[o[1]]) < rr) { hi = Math.max(hi, v[ax] - ctr[ax]); lo = Math.min(lo, v[ax] - ctr[ax]); }
+    const normal = new THREE.Vector3(); normal[ax] = hi >= -lo ? 1 : -1;
+    return { size, ctr, axis: d, len, grip, thinAxis: ax, normal };
+  }
+  function placeGear(slot, a, d) {
+    const info = a.gear || (a.gear = gearInfo(a.scene));
+    const g = new THREE.Group(), m = cloneS(a.scene), r = new THREE.Group();
+    if (slot === 'weap') {
+      r.quaternion.setFromUnitVectors(info.axis, new THREE.Vector3(...d.dir).normalize()); r.scale.setScalar(d.size / Math.max(info.len, 1e-3));
+      m.position.copy(info.grip).negate(); r.add(m); g.position.fromArray(d.hand);
+    } else if (slot === 'shld') {
+      const n = new THREE.Group(); n.scale[info.thinAxis] = d.thick || 1; m.position.copy(info.ctr).negate(); n.add(m);
+      const k = d.size / Math.max(...['x', 'y', 'z'].filter(a => a !== info.thinAxis).map(a => info.size[a]), 1e-3);
+      const out = new THREE.Vector3(...d.dir).normalize();
+      r.quaternion.setFromUnitVectors(info.normal, out); r.scale.setScalar(k); r.add(n);
+      g.position.fromArray(d.hand).addScaledVector(out, info.size[info.thinAxis] * (d.thick || 1) * k / 2 + (d.gap || 0));
+    } else {
+      r.rotation.set(...d.rot); r.scale.setScalar(d.size / Math.max(info.size.x, info.size.y, info.size.z, 1e-3));
+      m.position.copy(info.ctr).negate(); r.add(m); g.add(r);
+      if (d.flare || d.back) bendHat(g, m, d);
+      g.position.fromArray(d.pos); if (d.scl) g.scale.set(...d.scl); g.rotation.x = d.tilt || 0;
+    }
+    if (!r.parent) g.add(r);
+    return g;
+  }
+  // 帽子變形（主角座標，面向 +z）：越往下越寬、後半部往後鼓，兩側在手上方抬成拱形
+  function bendHat(g, m, d) {
+    g.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(g.matrixWorld).invert(), v = new THREE.Vector3();
+    const meshes = []; m.traverse(n => { if (n.isMesh) meshes.push(n); });
+    const mats = meshes.map(n => new THREE.Matrix4().multiplyMatrices(inv, n.matrixWorld));
+    let y0 = 1e9, y1 = -1e9, xm = 1e-6;
+    meshes.forEach((n, i) => { const p = n.geometry.attributes.position; for (let j = 0; j < p.count; j++) { v.fromBufferAttribute(p, j).applyMatrix4(mats[i]); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); xm = Math.max(xm, Math.abs(v.x)); } });
+    const armY = d.armY != null ? (d.armY - d.pos[1]) / (d.scl ? d.scl[1] : 1) : null;
+    const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    meshes.forEach((n, i) => {
+      n.geometry = n.geometry.clone();
+      const p = n.geometry.attributes.position, back = new THREE.Matrix4().copy(mats[i]).invert();
+      for (let j = 0; j < p.count; j++) {
+        v.fromBufferAttribute(p, j).applyMatrix4(mats[i]);
+        const t = 1 - (v.y - y0) / (y1 - y0), f = 1 + (d.flare || 0) * t * t, side = ss(.5, .8, Math.abs(v.x) / xm);
+        v.x *= f; v.z *= v.z < 0 ? f * (1 + (d.back || 0) * t * (1 - side)) : 1 + (d.flare || 0) * .35 * t * t;
+        if (armY != null && v.y < armY) v.y += (armY - v.y) * side * ss(-.45, .1, v.z / xm);
+        v.applyMatrix4(back); p.setXYZ(j, v.x, v.y, v.z);
+      }
+      p.needsUpdate = true; n.geometry.computeVertexNormals(); n.geometry.computeBoundingSphere();
+    });
+  }
+  function heroGear(p) {
+    const id = v => v && (typeof v === 'string' ? v : v.id || (v.d && v.d.id));
+    return { weap: id(p.weap) && 'weap_' + id(p.weap), shld: id(p.shld) && 'shld_' + id(p.shld), hat: id(p.hat) && 'hat_' + id(p.hat) };
+  }
+  function syncGear(e, p) {
+    const md = e.model;
+    if (!md.gearRig) { md.gearRig = new THREE.Group(); md.gearRig.rotation.y = -md.yawFix; md.holder.add(md.gearRig); md.gear = {}; }
+    const want = heroGear(p);
+    for (const slot in GEAR_SLOT) {
+      const id = want[slot] && TW.manifest[want[slot]] && !TW.failed[want[slot]] ? want[slot] : null;
+      const cur = md.gear[slot];
+      if ((cur && cur.id) === id) continue;
+      if (cur && cur.obj) md.gearRig.remove(cur.obj);      // 幾何是共用快取，不 dispose
+      md.gear[slot] = { id, obj: null };
+      if (!id) continue;
+      loadModel(id).then(a => {
+        if (md.gear[slot].id !== id) return;
+        md.gear[slot].obj = placeGear(slot, a, Object.assign({}, GEAR_SLOT[slot], TW.manifest[id]));
+        md.gearRig.add(md.gear[slot].obj);
+      }, () => { });
+    }
+  }
   function playRole(md, role) {
     if (md.cur === role) return;
     const nx = role && md.acts[role], pv = md.cur && md.acts[md.cur];
@@ -286,6 +385,7 @@ body.t3d #tags{display:none}
     }
     if (e.model) {
       const md = e.model;
+      if (e.isHero) syncGear(e, o);
       md.holder.position.y = bob;
       md.holder.rotation.y += (Math.atan2(Math.sin(e.face + md.yawFix - md.holder.rotation.y), Math.cos(e.face + md.yawFix - md.holder.rotation.y))) * Math.min(1, dt * 12);
       for (const m of md.mats) m.emissive.setScalar(fl * .8);
