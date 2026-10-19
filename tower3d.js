@@ -187,11 +187,12 @@ body.t3d #tags{display:none}
   }
 
   const ents = new Map();               // 遊戲物件 → 3D 物件
-  function entPos3(o) {
+  TW.ent = o => ents.get(o);            // 除錯用
+  function entPos3(o, noLunge) {
     let x = o.x, y = o.y;
     const a = G.anim && G.anim.find(v => v.o === o);
     if (a) { const k = 1 - Math.min(1, a.t / (a.dur || .11)); x = o.x + (a.fx - o.x) * k; y = o.y + (a.fy - o.y) * k; }
-    if (o.lunge) { const k = Math.sin(Math.min(1, o.lunge.t / .19) * Math.PI); x += o.lunge.dx * k * .32; y += o.lunge.dy * k * .32; }
+    if (o.lunge && !noLunge) { const k = Math.sin(Math.min(1, o.lunge.t / .19) * Math.PI); x += o.lunge.dx * k * .32; y += o.lunge.dy * k * .32; }
     return [x, y];
   }
 
@@ -478,6 +479,84 @@ body.t3d #tags{display:none}
     md.cur = role;
   }
 
+  /* ── 主角動作（程式做的，不用骨架）──────────────────────
+     走路：一跳一跳、落地壓扁，武器跟盾跟著晃
+     揮擊：遊戲出手（o.lunge）時武器以握把為軸 往後舉 → 用力劈下 → 收回（0.42 秒）
+     防禦：被打到、或有怪物撲向主角時，盾從側邊轉到身體前面擋（0.5 秒）
+     閃避：怪物沒打中（o.dodge）時往旁邊跳開再回來（0.38 秒） */
+  function heroMoves(e, o, dt) {
+    const md = e.model, A = md.moves || (md.moves = { swing: -1, guard: -1, dodge: -1, back: -1, walk: 0, lunge: null, dir: [1, 0], backDir: [0, 1] });
+    const ease = x => x * x * (3 - 2 * x);
+    if (o.lunge && o.lunge !== A.lunge) { A.lunge = o.lunge; A.swing = 0; }
+    if (o.dodge) {                                   // 用掉就清掉（只是畫面旗標），不然之後永遠不會再防禦
+      A.dodge = 0; A.guard = -1;
+      A.dir = (o.dodge.dx || o.dodge.dy) ? [-o.dodge.dy, o.dodge.dx] : [1, 0];   // 往攻擊方向的側邊閃
+      o.dodge = null;
+    }
+    if (A.dodge < 0 && A.guard < 0 && A.swing < 0 && A.back < 0) {
+      let hit = (o.flash || 0) > 0, from = null;
+      for (const m of (G.mons || [])) {
+        if (!m.lunge || m.lunge.t > .12) continue;
+        const ax = Math.sign(o.x - m.x), ay = Math.sign(o.y - m.y);   // 牠撲過來的方向（含遠程）
+        if ((ax || ay) && m.lunge.dx === ax && m.lunge.dy === ay) { hit = true; from = [m.x - o.x, m.y - o.y]; }
+      }
+      if (hit) {
+        // 攻擊從背後來（跟面向夾角超過約 110°）：擋不到 → 往前踉蹌、閃紅光
+        const fx = Math.sin(e.face), fz = Math.cos(e.face), L = from ? Math.hypot(from[0], from[1]) : 0;
+        if (from && (from[0] * fx + from[1] * fz) / L < -.35) { A.back = 0; A.backDir = [-from[0] / L, -from[1] / L]; }
+        else A.guard = 0;
+      }
+    }
+    const W = md.gear && md.gear.weap && md.gear.weap.obj, S = md.gear && md.gear.shld && md.gear.shld.obj;
+    // 揮擊：斜劈（從上方鏡頭看得清楚）—— 往右後方拉 → 往左前下方掃過身體 → 收回
+    let sx = 0, sy = 0;
+    if (A.swing >= 0) {
+      A.swing += dt; const p = A.swing / .42;
+      // 劍尖：拉到右後（x<0 往後倒、y 轉向右）→ 掃到左前（x>0 往前倒、y 轉向左）
+      if (p < .3) { const k = ease(p / .3); sx = -.6 * k; sy = .8 * k; }
+      else if (p < .5) { const k = ease((p - .3) / .2); sx = -.6 + 2.0 * k; sy = .8 + .3 * k; }
+      else { const k = 1 - ease((p - .5) / .5); sx = 1.4 * k; sy = 1.1 * k; }
+      if (p >= 1) A.swing = -1;
+    }
+    // 走路
+    const walking = e.moveT > 0;
+    A.walk = walking ? A.walk + dt * 15 : 0;
+    const hop = walking ? Math.abs(Math.sin(A.walk)) : 0;
+    md.holder.position.y += hop * .09;
+    if (walking) { const q = 1 - hop; md.holder.scale.set(1 + q * .06, 1 - q * .08, 1 + q * .06); }
+    if (W) { W.rotation.order = 'YXZ'; W.rotation.x = sx + (walking ? Math.sin(A.walk) * .18 : 0); W.rotation.y = sy; }   // 先往前倒（x）再繞身體掃（y）
+    // 防禦
+    let gd = 0;
+    if (A.guard >= 0) {
+      A.guard += dt; const p = A.guard / .5;
+      gd = p < .25 ? ease(p / .25) : p < .7 ? 1 : 1 - ease((p - .7) / .3);
+      if (p >= 1) A.guard = -1;
+    }
+    if (S) {
+      const b = S.userData.base || (S.userData.base = S.position.clone());
+      S.position.set(b.x + (.3 - b.x) * gd, b.y + (.46 - b.y) * gd + (walking ? Math.sin(A.walk + 1) * .03 : 0), b.z + (.62 - b.z) * gd);
+      S.rotation.y = -.8 * gd;
+    }
+    // 閃避
+    md.holder.position.x = md.holder.position.z = 0;
+    if (A.dodge >= 0) {
+      A.dodge += dt; const p = A.dodge / .38, k = Math.sin(Math.min(1, p) * Math.PI);
+      md.holder.position.x = A.dir[0] * k * .38; md.holder.position.z = A.dir[1] * k * .38;
+      md.holder.position.y += k * .12; md.holder.rotation.z = -A.dir[0] * k * .25;
+      if (p >= 1) A.dodge = -1;
+    }
+    // 背後被打：沒防住，被往前推一下、身體前傾、閃紅光（0.4 秒）
+    if (A.back >= 0) {
+      A.back += dt; const p = A.back / .4, k = p < .25 ? ease(p / .25) : 1 - ease((p - .25) / .75);
+      md.holder.position.x += A.backDir[0] * k * .22; md.holder.position.z += A.backDir[1] * k * .22;
+      // 整個人（腳底為軸）往被推的方向傾：繞 (dz, 0, -dx) 轉
+      e.grp.rotation.set(A.backDir[1] * k * .35, 0, -A.backDir[0] * k * .35);
+      const red = Math.max(0, 1 - p * 1.6);
+      for (const m of md.mats) m.emissive.setRGB(red * .9, 0, 0);
+      if (p >= 1) { A.back = -1; e.grp.rotation.set(0, 0, 0); }
+    }
+  }
+
   function updateEnt(e, o, cv, dt, visible) {
     e.grp.visible = visible;
     if (!visible) return;
@@ -485,9 +564,12 @@ body.t3d #tags{display:none}
     const [x, y] = entPos3(o);
     const bob = (o.st && (o.st['睡'] || o.st['麻'])) ? 0 : (Math.sin(clock * 3.4 + (e.isHero ? 0 : o.x * 1.7)) > .45 ? .035 : 0);
     e.grp.position.set(x + .5, 0, y + .5);
-    const mv = Math.hypot(x - e.last.x, y - e.last.y);
-    if (mv > 1e-3) { e.face = Math.atan2(x - e.last.x, y - e.last.y); e.moveT = .14; } else e.moveT -= dt;
-    e.last.set(x, y);
+    // 面向只看真正的走動；攻擊往前衝再退回不算（不然打完會轉身背對敵人），出手時直接面向目標
+    const [bx, by] = entPos3(o, true);
+    const mv = Math.hypot(bx - e.last.x, by - e.last.y);
+    if (mv > 1e-3) { e.face = Math.atan2(bx - e.last.x, by - e.last.y); e.moveT = .14; } else e.moveT -= dt;
+    if (o.lunge && (o.lunge.dx || o.lunge.dy)) e.face = Math.atan2(o.lunge.dx, o.lunge.dy);
+    e.last.set(bx, by);
     const fl = Math.max(0, Math.min(1, (o.flash || 0) / .09));
     if (e.sprite) {
       e.sprite.position.y = bob;
@@ -508,6 +590,7 @@ body.t3d #tags{display:none}
         md.inner.parent.scale.set(1 - k * .012, 1 + k * .025, 1 - k * .012);
         md.holder.rotation.z = e.moveT > 0 ? Math.sin(md.t * 16) * .07 : fl * Math.sin(md.t * 50) * .08;
       }
+      if (e.isHero) heroMoves(e, o, dt);
       md.mixer.update(dt);
     }
   }
@@ -604,6 +687,7 @@ body.t3d #tags{display:none}
     const dist = Math.max(8.5, 9.5 / (2 * half * cam.aspect)) / Math.pow(z, .7);
     cam.position.set(camT.x, camT.y + dist * .74, camT.z + dist * .67);
     cam.lookAt(camT);
+    if (TW.camHook) TW.camHook(cam, camT);   // 除錯用：截圖時換角度
     // 霧從鏡頭到玩家的距離之後才開始，遠處的房間慢慢沒入黑暗
     if (scene.fog) { scene.fog.near = dist * (fogOut ? 1.1 : .95); scene.fog.far = dist * (fogOut ? 2.4 : 1.65); }
     torch.position.set(px + .5, 1.6, py + .5);
@@ -625,7 +709,7 @@ body.t3d #tags{display:none}
   let lastT = performance.now();
   function frame(now) {
     requestAnimationFrame(frame);
-    const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+    const dt = Math.min(.1, (now - lastT) / 1000) * (TW.slow || 1); lastT = now;   // TW.slow：除錯用慢動作
     const live = TW.on && typeof G !== 'undefined' && G && G.f && G.p;
     document.body.classList.toggle('t3d', !!live);
     if (!live) return;
@@ -649,6 +733,8 @@ body.t3d #tags{display:none}
     updateCam(dt);
     renderer.render(scene, cam);
   }
+
+  TW.frame = frame;                     // 除錯用：手動推進一格（畫面隱藏時 requestAnimationFrame 會停）
 
   TW.toggle = function (on) {
     TW.on = on === undefined ? !TW.on : !!on;

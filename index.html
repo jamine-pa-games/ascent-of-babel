@@ -6631,7 +6631,13 @@ function act(m,it){
     // 影分身：命中率從 92% 掉到 45%，但它不是無敵 ——
     // 逃跑技能可以很強，防禦技能不行，不然玩家就沒有理由移動了
     const hit = G.rng.i(1,100) <= (p.st['影'] ? 45 : 92);
-    if(!hit){ SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)})); return; }
+    if(!hit){
+      SFX.play('miss',60); say(M('m.mmiss','{nm} 的攻擊落空了。',{nm:locName('mon',m.d)}));
+      // 只給畫面用（3D 閃避動作）：怪物照樣撲過來，主角往旁邊閃。不影響任何判定。
+      m.lunge = {dx:Math.sign(p.x-m.x)||0, dy:Math.sign(p.y-m.y)||0, t:0};
+      p.dodge = {dx:Math.sign(p.x-m.x)||0, dy:Math.sign(p.y-m.y)||0};
+      return;
+    }
     let dmg = rollDmg(m.d.atk, pDef(), false, mult);
     /* 影法師打的是「你自己」。它的攻擊力取自你當下的攻擊力，
        所以在鏡像世界裡，把裝備練得越好，影子就越痛 ——
@@ -11495,4 +11501,4 @@ refresh();
 <script src="vendor/three.min.js?v=r128"></script>
 <script src="vendor/GLTFLoader.js?v=r128"></script>
 <script src="vendor/SkeletonUtils.js?v=r128"></script>
-<script src="tower3d.js?v=20261019-2"></script>
+<script src="tower3d.js?v=20261019-3"></script>
