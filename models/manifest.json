@@ -4,7 +4,8 @@
     "rig": "static",
     "clips": [],
     "h": 0.95,
-    "made": "2026-10-19"
+    "made": "2026-10-19",
+    "yaw": -90
   },
   "hero": {
     "file": "hero.glb",
@@ -296,5 +297,650 @@
       0.9,
       0
     ]
+  },
+  "imp": {
+    "file": "imp.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -180
+  },
+  "skeleton": {
+    "file": "skeleton.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "shroom": {
+    "file": "shroom.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "mage": {
+    "file": "mage.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "golem": {
+    "file": "golem.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "crab": {
+    "file": "crab.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "centip": {
+    "file": "centip.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -180
+  },
+  "knight": {
+    "file": "knight.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "dryad": {
+    "file": "dryad.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -180
+  },
+  "hawk": {
+    "file": "hawk.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "scree": {
+    "file": "scree.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -180
+  },
+  "tengu": {
+    "file": "tengu.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "ash": {
+    "file": "ash.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "tanuki": {
+    "file": "tanuki.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "seraph": {
+    "file": "seraph.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "warden": {
+    "file": "warden.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_warden": {
+    "file": "b_warden.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_treant": {
+    "file": "b_treant.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_pyro": {
+    "file": "b_pyro.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_lord": {
+    "file": "b_lord.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_phoenix": {
+    "file": "b_phoenix.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_gate": {
+    "file": "b_gate.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_mermaid": {
+    "file": "b_mermaid.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "salam": {
+    "file": "salam.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -180
+  },
+  "wolf": {
+    "file": "wolf.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "ibex": {
+    "file": "ibex.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "rat": {
+    "file": "rat.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "refr": {
+    "file": "refr.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_oni": {
+    "file": "b_oni.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "chimera": {
+    "file": "chimera.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "grub": {
+    "file": "grub.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "wasp": {
+    "file": "wasp.glb",
+    "rig": "hexapod",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "turret": {
+    "file": "turret.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "goblin": {
+    "file": "goblin.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "mossy": {
+    "file": "mossy.glb",
+    "rig": "quadruped",
+    "clips": [
+      "walk"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "prism": {
+    "file": "prism.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "eel": {
+    "file": "eel.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "ratking": {
+    "file": "ratking.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "moth": {
+    "file": "moth.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "chochin": {
+    "file": "chochin.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "axiom": {
+    "file": "axiom.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "shadow": {
+    "file": "shadow.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "shinobi": {
+    "file": "shinobi.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "parad": {
+    "file": "parad.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "unnamed": {
+    "file": "unnamed.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_artisan": {
+    "file": "b_artisan.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "samurai_spirit": {
+    "file": "samurai_spirit.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_ballista": {
+    "file": "b_ballista.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_doll_heal": {
+    "file": "b_doll_heal.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_doll_mage": {
+    "file": "b_doll_mage.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_doll_tank": {
+    "file": "b_doll_tank.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_gaoler": {
+    "file": "b_gaoler.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_genmaan": {
+    "file": "b_genmaan.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_hallking": {
+    "file": "b_hallking.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_hanzo": {
+    "file": "b_hanzo.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_keeper": {
+    "file": "b_keeper.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_mind1": {
+    "file": "b_mind1.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_mind": {
+    "file": "b_mind.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_mind2": {
+    "file": "b_mind2.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90,
+    "clean": 0.05
+  },
+  "b_prism": {
+    "file": "b_prism.glb",
+    "rig": "static",
+    "clips": [],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_queen": {
+    "file": "b_queen.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
+  },
+  "b_musashimaru": {
+    "file": "b_musashimaru.glb",
+    "rig": "biped",
+    "clips": [
+      "idle",
+      "walk",
+      "attack",
+      "hurt"
+    ],
+    "h": 0.95,
+    "made": "2026-10-19",
+    "yaw": -90
   }
 }

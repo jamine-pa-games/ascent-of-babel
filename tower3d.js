@@ -196,12 +196,25 @@ body.t3d #tags{display:none}
     return [x, y];
   }
 
+  /* 畫面上的大小跟 2D 完成版同一套規則（bossVisualScale）：
+     雜魚 = 主角大小、菁英 1.5、頭目 2（寬高都是主角兩倍 → 面積 4 倍）、
+     門之守望 2.72、序章門衛 3.05。判定仍只佔腳下一格。 */
+  function scaleOf(d) {
+    if (!d) return 1;
+    if (d.id === 'b_gate') return 2.72;
+    if (d.id === 'b_keeper') return 3.05;
+    if (d.boss || d.visualBoss) return 2;
+    return d.elite ? 1.5 : 1;
+  }
+  // 會飛的離地多高（2D 的 FLY_H = 5/16 格；投石妖精再高 3/16）
+  const flyLift = o => (!o.d || !o.d.fly || (o.st && (o.st['睡'] || o.st['麻'] || o.st['石']))) ? 0 : (o.d.id === 'imp' ? .5 : .31);
+
   function makeEnt(o, isHero) {
-    const boss = !!(o.d && o.d.boss);
-    const size = boss ? 2.1 : 1.12;
+    const mul = isHero ? 1 : scaleOf(o.d), boss = mul > 1.6;
+    const size = 1.12 * mul;
     const grp = new THREE.Group();
-    const e = { grp, boss, size, sprite: null, cvNow: null, model: null, last: new THREE.Vector2(o.x, o.y), moveT: 0, face: 0, isHero };
-    grp.add(newShadow(boss ? 1.8 : 1));
+    const e = { grp, boss, mul, size, sprite: null, cvNow: null, model: null, last: new THREE.Vector2(o.x, o.y), moveT: 0, face: 0, isHero };
+    grp.add(newShadow(Math.max(1, mul * .9)));
     if (isHero) {
       const ring = new THREE.Mesh(new THREE.RingGeometry(.36, .44, 32), new THREE.MeshBasicMaterial({ color: 0xc9973f, transparent: true, opacity: .8, depthWrite: false }));
       ring.rotation.x = -Math.PI / 2; ring.position.y = .02; grp.add(ring);
@@ -243,8 +256,10 @@ body.t3d #tags{display:none}
   function attachModel(e, id, a) {
     const ent = TW.manifest[id];
     const inner = cloneS(a.scene), size = new THREE.Vector3(), ctr = new THREE.Vector3();
+    if (ent.clean) dropBits(inner, ent.clean);         // Tripo 做出來散在旁邊的碎片
     a.box.getSize(size); a.box.getCenter(ctr);
-    const s = (e.boss ? 1.9 : 1) * (ent.h || .95) / Math.max(size.y, 1e-3);
+    // 跟 2D 一樣「放進一格的框」：高度到 h，但又長又扁的（蜈蚣、展翅的鳥）寬度最多 1.3 格，不會蓋到隔壁
+    const mul = e.mul || 1, s = mul * Math.min((ent.h || .95) / Math.max(size.y, 1e-3), (ent.w || 1.3) / Math.max(size.x, size.z, 1e-3));
     inner.scale.setScalar(s); inner.position.set(-ctr.x * s, -a.box.min.y * s, -ctr.z * s);
     const holder = new THREE.Group(); holder.add(inner);
     const mats = [];
@@ -562,7 +577,7 @@ body.t3d #tags{display:none}
     if (!visible) return;
     spriteFor(e, cv);
     const [x, y] = entPos3(o);
-    const bob = (o.st && (o.st['睡'] || o.st['麻'])) ? 0 : (Math.sin(clock * 3.4 + (e.isHero ? 0 : o.x * 1.7)) > .45 ? .035 : 0);
+    const bob = ((o.st && (o.st['睡'] || o.st['麻'])) ? 0 : (Math.sin(clock * 3.4 + (e.isHero ? 0 : o.x * 1.7)) > .45 ? .035 : 0)) + (e.isHero ? 0 : flyLift(o));   // 影子在 grp 上，留在地面
     e.grp.position.set(x + .5, 0, y + .5);
     // 面向只看真正的走動；攻擊往前衝再退回不算（不然打完會轉身背對敵人），出手時直接面向目標
     const [bx, by] = entPos3(o, true);

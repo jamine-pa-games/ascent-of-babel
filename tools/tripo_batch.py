@@ -42,8 +42,19 @@ TOWER_ART = {
 # 前幾層就會遇到、外型實心的：先做這組最有感
 EASY = ["rat", "slime", "shroom", "imp", "skeleton", "wolf", "golem", "mage", "crab", "salam", "ibex", "centip"]
 HARD = ["knight", "dryad", "hawk", "scree", "ash", "tengu", "tanuki", "refr", "seraph", "warden", "chimera"]
-BOSS = [k for k in TOWER_ART if k.startswith("b_")]
-GROUPS = {"easy": EASY, "hard": HARD, "boss": BOSS, "all": EASY + HARD + BOSS}
+# 完成版（v23.1）才有的怪物與頭目：參考圖用 art-revamp 分支 web/art-hd/ 的高解析圖，存成 art3d/hd_<代號>
+EXTRA_MON = ["goblin", "grub", "turret", "wasp", "mossy", "eel", "prism", "ratking", "moth", "chochin",
+             "shinobi", "shadow", "axiom", "parad", "unnamed", "samurai_spirit"]
+EXTRA_BOSS = ["b_artisan", "b_ballista", "b_doll_heal", "b_doll_mage", "b_doll_tank", "b_gaoler", "b_genmaan",
+              "b_hallking", "b_hanzo", "b_keeper", "b_mind", "b_mind1", "b_mind2", "b_musashimaru", "b_prism", "b_queen"]
+# 舊參考圖跟完成版長得明顯不一樣的，也改用完成版的高解析圖（其餘外型相近的保留原本那隻）
+REDO_HD = ["slime", "shroom", "imp", "mage", "knight", "ash", "tengu", "seraph",
+           "b_warden", "b_lord", "b_oni", "b_mermaid", "b_gate"]
+for _k in EXTRA_MON + EXTRA_BOSS + REDO_HD:
+    TOWER_ART[_k] = "hd_" + _k
+BOSS = [k for k in TOWER_ART if k.startswith("b_") and k not in EXTRA_BOSS]
+GROUPS = {"easy": EASY, "hard": HARD, "boss": BOSS, "extra": EXTRA_MON + EXTRA_BOSS,
+          "all": EASY + HARD + BOSS + EXTRA_MON + EXTRA_BOSS}
 
 # 依骨架種類套的動作（Tripo 內建 preset）
 PRESETS = {
@@ -84,6 +95,16 @@ def to_png(key):
     im = Image.open(src).convert("RGBA")
     if max(im.size) > 1024:
         im.thumbnail((1024, 1024))
+    elif max(im.size) < 768:
+        # 小圖（192～320px）先裁掉透明邊、放大置中到 1024 —— Tripo 拿到大一點的圖，形狀抓得比較準
+        bb = im.getbbox()
+        if bb:
+            im = im.crop(bb)
+        s = 880 / max(im.size)
+        im = im.resize((round(im.size[0] * s), round(im.size[1] * s)), Image.LANCZOS)
+        canvas = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+        canvas.paste(im, ((1024 - im.size[0]) // 2, (1024 - im.size[1]) // 2), im)
+        im = canvas
     im.save(dst)
     return str(dst)
 
@@ -125,8 +146,10 @@ async def run(client, key, state, redo, lock):
     dl_dir.mkdir(parents=True, exist_ok=True)
     final_task = model
     if presets:
+        # 舊版綁骨架（v1.0，預設）只支援人形；四腳等其他骨架要用 v2.5
+        rig_ver = "v1.0-20240301" if rig_type == "biped" else "v2.5-20260210"
         await step("rig", lambda: client.rig_model(
-            original_model_task_id=st["model"], out_format="glb", rig_type=rig_type, spec="tripo"))
+            original_model_task_id=st["model"], model_version=rig_ver, out_format="glb", rig_type=rig_type, spec="tripo"))
         final_task = await step("anim", lambda: client.retarget_animation(
             original_model_task_id=st["rig"], animation=presets, out_format="glb",
             export_with_geometry=True, animate_in_place=True))
